@@ -1,0 +1,10 @@
+#login-form-wrapper,
+#register-form-wrapper {
+  transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+}
+
+.form-hidden {
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none; /* Prevents clicks on the hidden element */
+}
