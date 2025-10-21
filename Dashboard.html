@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="py-3 px-6">${p.name}</td>
         <td class="py-3 px-6">${p.category}</td>
         <td class="py-3 px-6">${p.stock}</td>
-        <td class="py-3 px-6">$${parseFloat(p.price).toFixed(2)}</td>
+        <td class="py-3 px-6">R ${parseFloat(p.price).toFixed(2)}</td>
         <td class="py-3 px-6">${p.unit}</td>
         <td class="py-3 px-6">${p.rating}</td>
         <td class="py-3 px-6">
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <h3 class="font-bold">${p.name}</h3>
           <span class="qty">${p.stock} ${p.unit}</span>
           <span class="rating block">⭐ ${p.rating}</span>
-          <span class="price block">$${parseFloat(p.price).toFixed(2)}</span>
+          <span class="price block">R ${parseFloat(p.price).toFixed(2)}</span>
         </div>
       `);
     });

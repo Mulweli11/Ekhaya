@@ -144,12 +144,163 @@
             <ul class="list-group mb-3" id="cart-items">
                 </ul>
             <li class="list-group-item d-flex justify-content-between">
-                <span>Total (USD)</span>
-                <strong id="offcanvas-cart-total">$0</strong>
+                <span>Total (R)</span>
+                <strong id="offcanvas-cart-total">R0</strong>
             </li>
         </div>
-        <button class="w-100 btn btn-primary btn-lg" type="submit">Continue to checkout</button>
+        <button class="w-100 btn btn-primary btn-lg" id="checkout-btn" type="button">
+  Continue to checkout
+</button>
+
     </div>
+
+    <!-- Checkout Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCheckout">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Checkout Details</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+ <div class="offcanvas-body">
+  <form id="checkoutForm">
+    <!-- Greeting -->
+    <div class="mb-4 text-center">
+      <h2>Almost there, <span id="user-name-display"></span>!</h2>
+      <p class="text-muted">Please provide the details below to complete your order.</p>
+    </div>
+
+    <!-- Delivery Address -->
+    <div class="mb-3">
+      <label for="address" class="form-label">Delivery Address <span class="text-danger">*</span></label>
+      <textarea
+        id="address"
+        class="form-control"
+        rows="2"
+        placeholder="Enter your delivery address"
+        required
+      ></textarea>
+      <small class="text-muted">Include street, building, or apartment info if needed.</small>
+    </div>
+
+    <!-- Delivery Message (Optional) -->
+    <div class="mb-3">
+      <label for="deliveryMessage" class="form-label">Delivery Message (Optional)</label>
+      <textarea
+        id="deliveryMessage"
+        class="form-control"
+        rows="2"
+        placeholder="Add special instructions or a message for the delivery person"
+      ></textarea>
+      <small class="text-muted">Example: “Please call me on arrival” or “Leave at the reception.”</small>
+    </div>
+
+    <!-- Payment Method -->
+    <div class="mb-3">
+      <label for="payment" class="form-label">Payment Method <span class="text-danger">*</span></label>
+      <select id="payment" class="form-select" required>
+        <option value="">Select a payment method</option>
+        <option value="card">Credit / Debit Card</option>
+        <option value="cash">Cash on Delivery</option>
+      </select>
+    </div>
+
+    <!-- Total & Submit -->
+    <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-4">
+      <strong>Total: <span id="checkoutTotal">R0</span></strong>
+      <button type="submit" class="btn btn-success">Confirm Order</button>
+    </div>
+  </form>
+</div>
+
+
+
+</div>
+<!-- Toast Notification -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+  <div id="checkoutToast" class="toast align-items-center text-bg-success border-0 fade" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex align-items-center">
+      <!-- Animated Tick SVG -->
+      <svg class="checkmark me-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+        <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+        <path class="checkmark-check" fill="none" d="M14 27l7 7 16-16"/>
+      </svg>
+      <div class="toast-body">
+        <strong>Order Confirmed!</strong><br>
+        Thank you for shopping with us 💚
+      </div>
+      <button type="button" class="btn-close btn-close-white ms-auto me-2" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Tick Animation */
+.checkmark {
+  width: 40px;
+  height: 40px;
+}
+
+.checkmark-circle {
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-dasharray: 157; /* 2πr ≈ 2*3.14*25 */
+  stroke-dashoffset: 157;
+  animation: circle 0.6s forwards;
+}
+
+.checkmark-check {
+  stroke: #fff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: check 0.3s 0.6s forwards;
+}
+
+@keyframes circle {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes check {
+  to { stroke-dashoffset: 0; }
+}
+</style>
+
+<script>
+// Open Checkout Offcanvas when clicking the button
+document.getElementById("checkout-btn")?.addEventListener("click", () => {
+  const cartTotal = document.getElementById("offcanvas-cart-total").textContent;
+  document.getElementById("checkoutTotal").textContent = cartTotal;
+
+  const checkoutPanel = new bootstrap.Offcanvas("#offcanvasCheckout");
+  checkoutPanel.show();
+});
+
+// Handle checkout submission
+document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  // Clear cart and reset totals
+  localStorage.removeItem("cart");
+  document.getElementById("cart-items").innerHTML = "";
+  document.getElementById("cart-count").textContent = "0";
+  document.getElementById("offcanvas-cart-total").textContent = "R0";
+
+  // Close checkout offcanvas
+  const checkoutPanel = bootstrap.Offcanvas.getInstance(document.getElementById("offcanvasCheckout"));
+  checkoutPanel.hide();
+
+  // Show animated toast confirmation
+  const toastEl = document.getElementById("checkoutToast");
+  const toast = new bootstrap.Toast(toastEl, { animation: true, delay: 4000 });
+  toastEl.classList.remove("show"); // reset animation
+  void toastEl.offsetWidth; // trigger reflow
+  toast.show();
+});
+</script>
+
+
+
 </div>
 
      <!-- account -->
@@ -276,7 +427,7 @@
           <div class="col-sm-8 col-lg-4 d-flex justify-content-end gap-5 align-items-center mt-4 mt-sm-0 justify-content-center justify-content-sm-end">
             <div class="support-box text-end d-none d-xl-block">
               <span class="fs-6 text-muted">For Support?</span>
-              <h5 class="mb-0">+980-34984089</h5>
+              <h5 class="mb-0">+27 679 975 669</h5>
             </div>
 
             <ul class="d-flex justify-content-end list-unstyled m-0">
@@ -315,7 +466,7 @@
             <div class="cart text-end d-none d-lg-block dropdown">
     <button class="border-0 bg-transparent d-flex flex-column gap-2 lh-1" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
         <span class="fs-6 text-muted dropdown-toggle">Your Cart</span>
-        <span id="main-cart-total" class="cart-total fs-5 fw-bold">$0</span>
+        <span id="main-cart-total" class="cart-total fs-5 fw-bold">R0</span>
     </button>
 </div>
           </div>
@@ -703,7 +854,8 @@ function createProductHTML(product) {
       <span class="rating">
         <svg width="24" height="24" class="text-primary"><use xlink:href="#star-solid"></use></svg> ${product.rating || '0'}
       </span>
-      <span class="price">$${parseFloat(product.price).toFixed(2)}</span>
+      <span class="price">R${parseFloat(product.price).toFixed(2)}</span>
+
       <div class="d-flex align-items-center justify-content-between">
         <div class="input-group product-qty">
           <span class="input-group-btn">
