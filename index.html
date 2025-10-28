@@ -806,246 +806,195 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
     </section>
 
 <!-- Trending Products -->
-  <section class="py-5">
+<section class="py-5">
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-12">
-        <div class="bootstrap-tabs product-tabs">
-          <div class="tabs-header d-flex justify-content-between border-bottom my-5">
-            <h3>Trending Products</h3>
-            <nav>
-              <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <a href="#nav-all" class="nav-link text-uppercase fs-6 active" data-bs-toggle="tab">All</a>
-                <a href="#nav-fruits" class="nav-link text-uppercase fs-6" data-bs-toggle="tab">Fruits & Veges</a>
-                <a href="#nav-juices" class="nav-link text-uppercase fs-6" data-bs-toggle="tab">Juices</a>
-              </div>
-            </nav>
-          </div>
-
-          <!-- Products grid -->
-          <div class="product-grid row" id="productsGridAll"></div>
-
-<script>
-//  Create product card HTML
-function createProductHTML(product) {
-  return `
-    <div class="product-item swiper-slide position-relative border p-3 rounded-lg mb-4">
-      ${product.discount ? `<span class="badge bg-success position-absolute m-3">${product.discount}</span>` : ''}
-      <a href="#" class="btn-wishlist">
-        <svg width="24" height="24"><use xlink:href="#heart"></use></svg>
-      </a>
-      <figure>
-        <a href="index.html" title="${product.name}">
-          <img src="${product.image}" class="tab-image">
-        </a>
-      </figure>
-      <h3>${product.name}</h3>
-      <span class="qty">${product.stock} ${product.unit || 'Unit'}</span>
-      <span class="rating">
-        <svg width="24" height="24" class="text-primary"><use xlink:href="#star-solid"></use></svg> ${product.rating || '0'}
-      </span>
-      <span class="price">R${parseFloat(product.price).toFixed(2)}</span>
-
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="input-group product-qty">
-          <span class="input-group-btn">
-            <button type="button" class="quantity-left-minus btn btn-danger btn-number" data-id="${product.id}" data-type="minus">
-              <svg width="16" height="16"><use xlink:href="#minus"></use></svg>
-            </button>
-          </span>
-          <input type="text" id="quantity-${product.id}" name="quantity" class="form-control input-number" value="1" readonly>
-          <span class="input-group-btn">
-            <button type="button" class="quantity-right-plus btn btn-success btn-number" data-id="${product.id}" data-type="plus">
-              <svg width="16" height="16"><use xlink:href="#plus"></use></svg>
-            </button>
-          </span>
-        </div>
-        <a href="#" class="nav-link add-to-cart-btn" 
-           data-id="${product.id}" 
-           data-name="${product.name}" 
-           data-price="${product.price}" 
-           data-image="${product.image}">
-          Add to Cart <iconify-icon icon="uil:shopping-cart"></iconify-icon>
-        </a>
-      </div>
-    </div>
-  `;
-}
-
-// Load products from localStorage
-function loadProducts() {
-  const products = JSON.parse(localStorage.getItem("products")) || [];
-  const grid = document.getElementById("productsGridAll");
-  if (!grid) return;
-  grid.innerHTML = "";
-
-  products.forEach(product => {
-    grid.insertAdjacentHTML("beforeend", createProductHTML(product));
-  });
-
-  attachQuantityEvents();
-  attachAddToCartEvents();
-
-  // Save to Firebase asynchronously without blocking UI
-  products.forEach(product => {
-    saveProductToFirebase(product).catch(err => console.error(err));
-  });
-}
-
-
-
-// Quantity buttons
-function attachQuantityEvents() {
-  document.querySelectorAll('.quantity-left-minus, .quantity-right-plus').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const id = parseInt(e.currentTarget.getAttribute('data-id'));
-      const type = e.currentTarget.getAttribute('data-type');
-      const input = document.getElementById(`quantity-${id}`);
-      let value = parseInt(input.value);
-      if (type === 'minus' && value > 1) value--;
-      if (type === 'plus') value++;
-      input.value = value;
-    });
-  });
-}
-
-//  Add to cart buttons
-function attachAddToCartEvents() {
-  document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const id = btn.getAttribute('data-id');
-      const name = btn.getAttribute('data-name');
-      const price = parseFloat(btn.getAttribute('data-price'));
-      const image = btn.getAttribute('data-image');
-      const quantity = parseInt(document.getElementById(`quantity-${id}`).value);
-
-      // Call your existing addToCart()
-      addToCart(name, price, quantity, image);
-
-      // Open offcanvas cart (if exists)
-      const offcanvasElement = document.getElementById('offcanvasCart');
-      if (offcanvasElement) {
-        const offcanvas = new bootstrap.Offcanvas(offcanvasElement);
-        offcanvas.show();
-      }
-    });
-  });
-}
-
-//  Run when page loads
-window.addEventListener("DOMContentLoaded", loadProducts);
-</script>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-<script>
-// --- Firebase config ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDWH3LoCvRmTUMthsUsIA0MBiqZ4NmFyco",
-  authDomain: "ecome-72c36.firebaseapp.com",
-  projectId: "ecome-72c36",
-  storageBucket: "ecome-72c36.firebasestorage.app",
-  messagingSenderId: "880319220349",
-  appId: "1:880319220349:web:4af4666ec90587a23dbf14",
-  measurementId: "G-PCHS3RPXD4"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-// --- Save product to Firebase ---
-async function saveProductToFirebase(product) {
-  try {
-    const docRef = db.collection("products").doc(product.id.toString());
-    const docSnap = await docRef.get();
-
-    if (!docSnap.exists) { // Save only if not already in Firebase
-      await docRef.set({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        stock: product.stock,
-        unit: product.unit || "Unit",
-        image: product.image,
-        rating: product.rating || 0,
-        discount: product.discount || null,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      console.log("Product saved to Firebase:", product.name);
-    }
-  } catch (err) {
-    console.error("Error saving product:", err);
-  }
-}
-
-// --- Load products ---
-function loadProducts() {
-  const products = JSON.parse(localStorage.getItem("products")) || [];
-  const grid = document.getElementById("productsGridAll");
-  if (!grid) return;
-
-  grid.innerHTML = "";
-
-  products.forEach(product => {
-    grid.insertAdjacentHTML("beforeend", createProductHTML(product));
-  });
-
-  attachQuantityEvents();
-  attachAddToCartEvents();
-
-  // --- Save all products to Firebase after rendering ---
-  products.forEach(product => saveProductToFirebase(product));
-}
-
-// Run when page loads
-window.addEventListener("DOMContentLoaded", loadProducts);
-</script>
-
-
+        <h3 class="mb-4">Trending Fruits</h3>
+        <div class="swiper product-slider" id="productsGridFruits">
+          <div class="swiper-wrapper"></div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- Swiper JS (optional if you want sliding effect) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDWH3LoCvRmTUMthsUsIA0MBiqZ4NmFyco",
+      authDomain: "ecome-72c36.firebaseapp.com",
+      projectId: "ecome-72c36",
+      storageBucket: "ecome-72c36.appspot.com",
+      messagingSenderId: "880319220349",
+      appId: "1:880319220349:web:4af4666ec90587a23dbf14"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const db = firebase.firestore();
+
+    // LocalStorage Cart
+    function getCart() {
+      return JSON.parse(localStorage.getItem("cart")) || [];
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+
+    // Create product HTML in swiper style
+    function createProductHTML(product) {
+      return `
+        <div class="product-item swiper-slide position-relative border p-3 rounded-lg mb-4">
+          ${product.discount ? `<span class="badge bg-success position-absolute m-3">-${product.discount}%</span>` : ''}
+          <a href="#" class="btn-wishlist position-absolute" style="top:10px; right:10px;">
+            <svg width="24" height="24"><use xlink:href="#heart"></use></svg>
+          </a>
+          <figure>
+            <a href="#" title="${product.name}">
+              <img src="${product.image}" class="tab-image w-100" style="height:150px; object-fit:cover;">
+            </a>
+          </figure>
+          <h3>${product.name}</h3>
+          <span class="qty">${product.stock} ${product.unit || 'Unit'}</span>
+          <span class="rating">
+            <svg width="24" height="24" class="text-primary"><use xlink:href="#star-solid"></use></svg>
+            ${product.rating || 0}
+          </span>
+          <span class="price">R${parseFloat(product.price).toFixed(2)}</span>
+          <div class="d-flex align-items-center justify-content-between mt-2">
+            <div class="input-group product-qty" style="width:120px;">
+              <span class="input-group-btn">
+                <button type="button" class="quantity-left-minus btn btn-danger btn-number" data-type="minus">
+                  <svg width="16" height="16"><use xlink:href="#minus"></use></svg>
+                </button>
+              </span>
+              <input type="text" name="quantity" class="form-control input-number text-center" value="1">
+              <span class="input-group-btn">
+                <button type="button" class="quantity-right-plus btn btn-success btn-number" data-type="plus">
+                  <svg width="16" height="16"><use xlink:href="#plus"></use></svg>
+                </button>
+              </span>
+            </div>
+            <a href="#" class="nav-link add-to-cart-btn" data-id="${product.id}">
+              Add to Cart <iconify-icon icon="uil:shopping-cart"></iconify-icon>
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render Fruits products
+    function renderFruits(products) {
+      const wrapper = document.querySelector("#productsGridFruits .swiper-wrapper");
+      wrapper.innerHTML = "";
+
+      const fruits = products.filter(p => p.category === "Fruits");
+
+      if (fruits.length === 0) {
+        wrapper.innerHTML = '<p class="text-center w-100">No fruits found.</p>';
+        return;
+      }
+
+      fruits.forEach(p => wrapper.insertAdjacentHTML("beforeend", createProductHTML(p)));
+
+      // Quantity buttons
+      wrapper.querySelectorAll('.quantity-left-minus').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const input = btn.closest('.product-item').querySelector('.input-number');
+          let val = parseInt(input.value) || 1;
+          if(val > 1) input.value = val - 1;
+        });
+      });
+
+      wrapper.querySelectorAll('.quantity-right-plus').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const input = btn.closest('.product-item').querySelector('.input-number');
+          let val = parseInt(input.value) || 1;
+          input.value = val + 1;
+        });
+      });
+
+      // Add to Cart buttons
+      wrapper.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.preventDefault();
+          const id = btn.getAttribute('data-id');
+          const product = fruits.find(f => f.id === id);
+          if (!product) return;
+          const quantity = parseInt(btn.closest('.product-item').querySelector('.input-number').value);
+
+          const cart = getCart();
+          const existing = cart.find(item => item.id === id);
+          if (existing) {
+            existing.quantity += quantity;
+          } else {
+            cart.push({
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              quantity,
+              image: product.image
+            });
+          }
+
+          saveCart(cart);
+          alert(`${quantity} ${product.name}(s) added to cart!`);
+          console.log("Cart:", cart);
+        });
+      });
+
+      // Initialize Swiper
+      new Swiper(".product-slider", {
+        slidesPerView: 4,
+        spaceBetween: 20,
+        navigation: true,
+        breakpoints: {
+          320: { slidesPerView: 1 },
+          576: { slidesPerView: 2 },
+          768: { slidesPerView: 3 },
+          992: { slidesPerView: 4 },
+        },
+      });
+    }
+
+    // Firebase real-time
+    db.collection("products").onSnapshot(snapshot => {
+      const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderFruits(products);
+    });
+
+    console.log("Trending Fruits swiper loaded...");
+  </script>
 </section>
 
 
-    <section class="py-5">
-      <div class="container-fluid">
-        <div class="row">
-          
-          <div class="col-md-6">
-            <div class="banner-ad bg-danger mb-3" style="background: url('images/ad-image-3.png');background-repeat: no-repeat;background-position: right bottom;">
-              <div class="banner-content p-5">
 
-                <div class="categories text-primary fs-3 fw-bold">Upto 25% Off</div>
-                <h3 class="banner-title">Luxa Dark Chocolate</h3>
-                <p>Very tasty & creamy vanilla flavour creamy muffins.</p>
-                <a href="#" class="btn btn-dark text-uppercase">Show Now</a>
 
-              </div>
-            
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="banner-ad bg-info" style="background: url('images/ad-image-4.png');background-repeat: no-repeat;background-position: right bottom;">
-              <div class="banner-content p-5">
 
-                <div class="categories text-primary fs-3 fw-bold">Upto 25% Off</div>
-                <h3 class="banner-title">Creamy Muffins</h3>
-                <p>Very tasty & creamy vanilla flavour creamy muffins.</p>
-                <a href="#" class="btn btn-dark text-uppercase">Show Now</a>
 
-              </div>
-            
-            </div>
-          </div>
-             
-        </div>
-      </div>
-    </section>
+
+
+
+
+
+
+
+
+
+
+
+    
 <!-- Best selling products -->
     <section class="py-5 overflow-hidden">
       <div class="container-fluid">
