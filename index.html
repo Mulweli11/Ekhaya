@@ -375,55 +375,129 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
   
     
     <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasSearch" aria-labelledby="Search">
-      <div class="offcanvas-header justify-content-center">
+    <div class="offcanvas-header justify-content-center">
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-      </div>
-      <div class="offcanvas-body">
-        <div class="order-md-last">
-          <h4 class="d-flex justify-content-between align-items-center mb-3">
-            <span class="text-primary">Search</span>
-          </h4>
-          <form role="search" action="index.html" method="get" class="d-flex mt-3 gap-0">
-            <input class="form-control rounded-start rounded-0 bg-light" type="email" placeholder="What are you looking for?" aria-label="What are you looking for?">
-            <button class="btn btn-dark rounded-end rounded-0" type="submit">Search</button>
-          </form>
-        </div>
-      </div>
     </div>
+    <div class="offcanvas-body">
+    <div class="order-md-last">
+        <h4 class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-primary">Search</span>
+        </h4>
+        <form id="offcanvas-search-form" role="search" class="d-flex mt-3 gap-0">
+            <input id="offcanvas-search-input" 
+                   class="form-control rounded-start rounded-0 bg-light" 
+                   type="text" 
+                   placeholder="Search category or product..." 
+                   aria-label="Search" 
+                   list="categoryOptions">
+            <button class="btn btn-dark rounded-end rounded-0" type="submit">Search</button>
+        </form>
+    </div>
+</div>
+</div>
+<script>
+  // This is the essential JavaScript needed for the search to function:
 
-    <header>
-      <div class="container-fluid">
+// Map category names (from the search box) to their standalone section IDs
+const categoryIdMap = {
+    "Fruits": "standaloneFruits",
+    "Vegetables": "standaloneVegetables",
+    "Beverages": "standaloneBeverages",
+    "Snacks": "standaloneSnacks",
+    "Dairy": "standaloneDairy",
+    "Meat": "standaloneMeat"
+};
+
+function handleCategorySearch(event) {
+    event.preventDefault(); // Stop the default form submission/page reload
+    
+    // Determine which form was submitted and get the input value
+    let searchInput;
+    if (event.target.id === 'desktop-search-form') {
+        searchInput = document.getElementById('desktop-search-input');
+    } else if (event.target.id === 'offcanvas-search-form') {
+        searchInput = document.getElementById('offcanvas-search-input');
+    } else {
+        return; 
+    }
+
+    const searchTerm = searchInput.value.trim();
+    
+    // Normalize the term to match the map keys (e.g., "fruits" -> "Fruits")
+    const normalizedTerm = searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1).toLowerCase();
+
+    const targetId = categoryIdMap[normalizedTerm];
+
+    if (targetId) {
+        // Redirect to the section ID (triggers a scroll)
+        window.location.href = `#${targetId}`;
+        
+        // Clear the search input after successful navigation
+        searchInput.value = '';
+        
+        // If in offcanvas, close it (requires Bootstrap)
+        const offcanvasEl = document.getElementById('offcanvasSearch');
+        if (offcanvasEl && typeof bootstrap !== 'undefined' && bootstrap.Offcanvas) {
+            const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (offcanvas) offcanvas.hide();
+        }
+    } else {
+        // If the search term is NOT a category, you can handle a general search here
+        // For now, it just logs it.
+        console.log(`Searching for general product: ${searchTerm}`);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Attach listener to the desktop search form
+    const desktopForm = document.getElementById('desktop-search-form');
+    if (desktopForm) {
+        desktopForm.addEventListener('submit', handleCategorySearch);
+    }
+
+    // Attach listener to the offcanvas search form
+    const offcanvasForm = document.getElementById('offcanvas-search-form');
+    if (offcanvasForm) {
+        offcanvasForm.addEventListener('submit', handleCategorySearch);
+    }
+});
+</script>
+
+<header>
+    <div class="container-fluid">
         <div class="row py-3 border-bottom">
-          
-          <div class="col-sm-4 col-lg-3 text-center text-sm-start">
-            <div class="main-logo">
-              <a href="index.html">
-                <img id="e" src="images/Ekhaya.png" alt="logo" class="img-fluid">
-              </a>
+            
+            <div class="col-sm-4 col-lg-3 text-center text-sm-start">
+                <div class="main-logo">
+                    <a href="index.html">
+                        <img id="e" src="images/Ekhaya.png" alt="logo" class="img-fluid">
+                    </a>
+                </div>
             </div>
-          </div>
-          
-          <div class="col-sm-6 offset-sm-2 offset-md-0 col-lg-5 d-none d-lg-block">
-            <div class="search-bar row bg-light p-2 my-2 rounded-4">
-              <div class="col-md-4 d-none d-md-block">
-                <select class="form-select border-0 bg-transparent">
-                  <option>All Categories</option>
-                  <option>Groceries</option>
-                  <option>Drinks</option>
-                  <option>Snacks</option>
-                  <option>Backery</option>
-                </select>
-              </div>
-              <div class="col-11 col-md-7">
-                <form id="search-form" class="text-center" action="index.html" method="post">
-                  <input type="text" class="form-control border-0 bg-transparent" placeholder="Search for more than 250 products" />
-                </form>
-              </div>
-              <div class="col-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M21.71 20.29L18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 7-7a7 7 0 0 1-7 7Z"/></svg>
-              </div>
+            
+            <div class="col-sm-6 offset-sm-2 offset-md-0 col-lg-5 d-none d-lg-block">
+                <div class="search-bar row bg-light p-2 my-2 rounded-4">
+                    <div class="col-md-4 d-none d-md-block">
+                        <select class="form-select border-0 bg-transparent">
+                            <option value="" selected>All Categories</option>
+                            <option value="Fruits">Fruits</option>
+                            <option value="Vegetables">Vegetables</option>
+                            <option value="Beverages">Beverages</option>
+                            <option value="Snacks">Snacks</option>
+                            <option value="Dairy">Dairy</option>
+                            <option value="Meat">Meat</option>
+                        </select>
+                    </div>
+                    <div class="col-11 col-md-7">
+                        <form id="search-form" class="text-center" action="index.html" method="post">
+                            <input type="text" class="form-control border-0 bg-transparent" placeholder="Search for more than 250 products" />
+                        </form>
+                    </div>
+                    <div class="col-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M21.71 20.29L18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 7-7a7 7 0 0 1-7 7Z"/></svg>
+                    </div>
+                </div>
             </div>
-          </div>
           
           <div class="col-sm-8 col-lg-4 d-flex justify-content-end gap-5 align-items-center mt-4 mt-sm-0 justify-content-center justify-content-sm-end">
             <div class="support-box text-end d-none d-xl-block">
@@ -493,13 +567,15 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
                 <div class="offcanvas-body">
               
                   <select class="filter-categories border-0 mb-0 me-5">
-                    <option>Shop by Departments</option>
-                    <option>Groceries</option>
-                    <option>Drinks</option>
-                    <option>Backery</option>
-                    <option>Fruits and Vegetables</option>
-                    <option>Snacks</option>
-                  </select>
+    <option value="" selected>Shop by Departments</option>
+    <option value="Fruits">Fruits 🍎</option>
+    <option value="Vegetables">Vegetables 🥦</option>
+    <option value="Beverages">Beverages 🍹</option>
+    <option value="Snacks">Snacks 🥨</option>
+    <option value="Dairy">Dairy 🧀</option>
+    <option value="Meat">Meat 🥩</option>
+    <option value="Other">Other Groceries</option>
+</select>
               
                   <ul class="navbar-nav justify-content-end menu-list list-unstyled d-flex gap-md-3 mb-0">
                     
@@ -652,22 +728,45 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
 
             <div class="category-carousel swiper">
               <div class="swiper-wrapper">
-                <a href="index.html" class="nav-link category-item swiper-slide">
-                  <img src="images/icon-vegetables-broccoli.png" alt="Category Thumbnail">
-                  <h3 class="category-title">Fruits & Veges</h3>
-                </a>
-                <a href="index.html" class="nav-link category-item swiper-slide">
-                  <img src="images/icon-bread-baguette.png" alt="Category Thumbnail">
-                  <h3 class="category-title">Breads & Sweets</h3>
-                </a>
-                <a href="index.html" class="nav-link category-item swiper-slide">
-                  <img src="images/icon-soft-drinks-bottle.png" alt="Category Thumbnail">
-                  <h3 class="category-title">Fruits & Vegies</h3>
-                </a>
-                
-              
-                
-              </div>
+    <a href="#standaloneFruits" class="nav-link category-item swiper-slide">
+        <img src="images/icon-vegetables-broccoli.png" alt="Category Thumbnail">
+        <h3 class="category-title">Fruits</h3>
+    </a>
+    <a href="#standaloneVegetables" class="nav-link category-item swiper-slide">
+        <img src="images/icon-vegetables-carrot.png" alt="Category Thumbnail">
+        <h3 class="category-title">Vegetables</h3>
+    </a>
+    
+    <a href="#standaloneBreadsSweets" class="nav-link category-item swiper-slide">
+        <img src="images/icon-bread-baguette.png" alt="Category Thumbnail">
+        <h3 class="category-title">Breads & Sweets</h3>
+    </a>
+    <a href="#standaloneBeverages" class="nav-link category-item swiper-slide">
+        <img src="images/icon-soft-drinks-bottle.png" alt="Category Thumbnail">
+        <h3 class="category-title">Beverages</h3>
+    </a>
+    
+    <a href="#standaloneSnacks" class="nav-link category-item swiper-slide">
+        <img src="images/icon-snacks-pretzel.png" alt="Category Thumbnail">
+        <h3 class="category-title">Snacks</h3>
+    </a>
+    <a href="#standaloneDairy" class="nav-link category-item swiper-slide">
+        <img src="images/icon-dairy-cheese.png" alt="Category Thumbnail">
+        <h3 class="category-title">Dairy</h3>
+    </a>
+    <a href="#standaloneMeat" class="nav-link category-item swiper-slide">
+        <img src="images/icon-meat-steak.png" alt="Category Thumbnail">
+        <h3 class="category-title">Meat</h3>
+    </a>
+    <a href="#standaloneBreakfast" class="nav-link category-item swiper-slide">
+        <img src="images/icon-cereal-milk.png" alt="Category Thumbnail">
+        <h3 class="category-title">Breakfast</h3>
+    </a>
+    <a href="#standaloneHousehold" class="nav-link category-item swiper-slide">
+        <img src="images/icon-home-cleaning.png" alt="Category Thumbnail">
+        <h3 class="category-title">Household</h3>
+    </a>
+</div>
             </div>
 
           </div>
@@ -803,27 +902,270 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
 
 <!-- Trending Products -->
 <section class="py-5">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12">
-        <h3 class="mb-4">Trending Fruits</h3>
-        <div class="swiper product-slider" id="productsGridFruits">
-          <div class="swiper-wrapper"></div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                
+                <h3 class="mb-4">Trending Products</h3>
+
+                <ul class="nav nav-tabs mb-4" id="trendingTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="fruits-tab" data-bs-toggle="tab" data-bs-target="#productsGridFruits" type="button" role="tab" aria-controls="productsGridFruits" aria-selected="true">Fruits 🍎</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="beverages-tab" data-bs-toggle="tab" data-bs-target="#productsGridBeverages" type="button" role="tab" aria-controls="productsGridBeverages" aria-selected="false">Beverages 🍹</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="snacks-tab" data-bs-toggle="tab" data-bs-target="#productsGridSnacks" type="button" role="tab" aria-controls="productsGridSnacks" aria-selected="false">Snacks 🥨</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="dairy-tab" data-bs-toggle="tab" data-bs-target="#productsGridDairy" type="button" role="tab" aria-controls="productsGridDairy" aria-selected="false">Dairy 🧀</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="meat-tab" data-bs-toggle="tab" data-bs-target="#productsGridMeat" type="button" role="tab" aria-controls="productsGridMeat" aria-selected="false">Meat 🥩</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="vegetables-tab" data-bs-toggle="tab" data-bs-target="#productsGridVegetables" type="button" role="tab" aria-controls="productsGridVegetables" aria-selected="false">Vegetables 🥦</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="trendingTabsContent">
+                    
+                    <div class="tab-pane fade show active" id="productsGridFruits" role="tabpanel" aria-labelledby="fruits-tab" tabindex="0">
+                        <div class="swiper product-slider">
+                            <div class="swiper-wrapper"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="productsGridBeverages" role="tabpanel" aria-labelledby="beverages-tab" tabindex="0">
+                        <div class="swiper product-slider">
+                            <div class="swiper-wrapper"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="productsGridSnacks" role="tabpanel" aria-labelledby="snacks-tab" tabindex="0">
+                        <div class="swiper product-slider">
+                            <div class="swiper-wrapper"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="productsGridDairy" role="tabpanel" aria-labelledby="dairy-tab" tabindex="0">
+                        <div class="swiper product-slider">
+                            <div class="swiper-wrapper"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="productsGridMeat" role="tabpanel" aria-labelledby="meat-tab" tabindex="0">
+                        <div class="swiper product-slider">
+                            <div class="swiper-wrapper"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="productsGridVegetables" role="tabpanel" aria-labelledby="vegetables-tab" tabindex="0">
+                        <div class="swiper product-slider">
+                            <div class="swiper-wrapper"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
-      </div>
     </div>
-  </div>
+</section>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+---
 
-  <!-- Swiper JS (optional if you want sliding effect) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+<section class="py-5">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <h3 class="mb-4">Fruits 🍎</h3>
+                <div id="standaloneFruits" class="product-grid-section">
+                    <div class="swiper product-slider">
+                        <div class="swiper-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-  <script>
-    // Firebase config
+<section class="py-5">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <h3 class="mb-4">Beverages 🍹</h3>
+                <div id="standaloneBeverages" class="product-grid-section">
+                    <div class="swiper product-slider">
+                        <div class="swiper-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <h3 class="mb-4">Snacks 🥨</h3>
+                <div id="standaloneSnacks" class="product-grid-section">
+                    <div class="swiper product-slider">
+                        <div class="swiper-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <h3 class="mb-4">Dairy 🧀</h3>
+                <div id="standaloneDairy" class="product-grid-section">
+                    <div class="swiper product-slider">
+                        <div class="swiper-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <h3 class="mb-4">Meat 🥩</h3>
+                <div id="standaloneMeat" class="product-grid-section">
+                    <div class="swiper product-slider">
+                        <div class="swiper-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <h3 class="mb-4">Vegetables 🥦</h3>
+                <div id="standaloneVegetables" class="product-grid-section">
+                    <div class="swiper product-slider">
+                        <div class="swiper-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+---
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+
+<script>
+    // --- Cart Logic (Unchanged) ---
+    let cart = [];
+
+    function updateCart() {
+      const cartItemsContainer = document.getElementById("cart-items");
+      const cartCount = document.getElementById("cart-count");
+      const offcanvasCartTotal = document.getElementById("offcanvas-cart-total");
+      const mainCartTotal = document.getElementById("main-cart-total"); // optional
+      const mainCartCount = document.getElementById("main-cart-count"); // optional
+
+      if (!cartItemsContainer || !cartCount || !offcanvasCartTotal) {
+        return;
+      }
+
+      cartItemsContainer.innerHTML = "";
+      let total = 0;
+      let itemCount = 0;
+
+      cart.forEach(item => {
+        const itemPrice = parseFloat(item.price);
+        total += itemPrice * item.quantity;
+        itemCount += item.quantity;
+
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between lh-sm";
+        li.innerHTML = `
+            <div class="d-flex align-items-center">
+                <img src="${item.image}" alt="${item.name}" style="width: 50px; height: auto; margin-right: 15px;">
+                <div>
+                    <h6 class="my-0">${item.name}</h6>
+                    <small class="text-body-secondary">Qty: ${item.quantity}</small>
+                </div>
+            </div>
+            <span class="text-body-secondary me-3">R${(itemPrice * item.quantity).toFixed(2)}</span>
+            <button class="btn btn-sm btn-danger remove-item" data-product-name="${item.name}">
+                &times;
+            </button>
+        `;
+        cartItemsContainer.appendChild(li);
+      });
+
+      offcanvasCartTotal.textContent = `R${total.toFixed(2)}`;
+      if (mainCartTotal) {
+        mainCartTotal.textContent = `R${total.toFixed(2)}`;
+      }
+
+      cartCount.textContent = itemCount;
+      if (mainCartCount) {
+        mainCartCount.textContent = itemCount;
+      }
+    }
+
+    function addToCart(productName, productPrice, productQty = 1, productImage) {
+      const existingItem = cart.find(item => item.name === productName);
+      const price = parseFloat(productPrice); 
+
+      if (existingItem) {
+        existingItem.quantity += productQty;
+      } else {
+        cart.push({ name: productName, price: price, quantity: productQty, image: productImage });
+      }
+
+      updateCart();
+      const offcanvasElement = document.getElementById('offcanvasCart');
+      if (offcanvasElement && typeof bootstrap !== 'undefined' && bootstrap.Offcanvas) {
+        const offcanvas = new bootstrap.Offcanvas(offcanvasElement);
+        offcanvas.show();
+      }
+    }
+
+    function removeFromCart(productName) {
+      cart = cart.filter(item => item.name !== productName);
+      updateCart();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const cartItemsContainer = document.getElementById("cart-items");
+      if (cartItemsContainer) {
+        cartItemsContainer.addEventListener("click", (e) => {
+          if (e.target.classList.contains("remove-item")) {
+            const productName = e.target.getAttribute("data-product-name");
+            removeFromCart(productName);
+          }
+        });
+      }
+      
+      updateCart();
+    });
+</script>
+
+<script>
+    // --- Firebase & Swiper/Product Rendering Logic (Modified) ---
     const firebaseConfig = {
       apiKey: "AIzaSyDWH3LoCvRmTUMthsUsIA0MBiqZ4NmFyco",
       authDomain: "ecome-72c36.firebaseapp.com",
@@ -833,22 +1175,70 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
       appId: "1:880319220349:web:4af4666ec90587a23dbf14"
     };
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // LocalStorage Cart
-    function getCart() {
-      return JSON.parse(localStorage.getItem("cart")) || [];
+    // Helper function to initialize Swiper for a given selector
+    function initSwiper(selector) {
+        const swiperElement = document.querySelector(selector).querySelector('.swiper');
+        // Destroy existing Swiper instance
+        if (swiperElement && swiperElement.swiper) {
+            swiperElement.swiper.destroy(true, true);
+        }
+
+        new Swiper(selector + ' .swiper', {
+            slidesPerView: 4,
+            spaceBetween: 20,
+            navigation: true,
+            observer: true,       // Watch for changes on the swiper element and its children
+            observeParents: true, // Watch for changes on parent elements
+            breakpoints: {
+                320: { slidesPerView: 1 },
+                576: { slidesPerView: 2 },
+                768: { slidesPerView: 3 },
+                992: { slidesPerView: 4 },
+            },
+        });
     }
 
-    function saveCart(cart) {
-      localStorage.setItem("cart", JSON.stringify(cart));
+    // Helper function to attach 'Add to Cart' and Quantity listeners
+    function attachEventListeners(wrapper, productList) {
+        // Add to Cart listeners
+        wrapper.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.preventDefault();
+                
+                const id = btn.getAttribute('data-id');
+                const product = productList.find(p => p.id === id);
+                if (!product) return;
+
+                const productItem = btn.closest('.product-item');
+                const quantityInput = productItem.querySelector('.input-number');
+                const quantity = parseInt(quantityInput.value);
+                
+                if (typeof addToCart === 'function') {
+                    addToCart(product.name, parseFloat(product.price), quantity, product.image);
+                    quantityInput.value = 1; // Reset quantity after adding to cart
+                }
+            });
+        });
+
+        // Quantity (Plus/Minus) listeners
+        wrapper.querySelectorAll(".product-qty button").forEach(button => {
+            button.addEventListener("click", () => {
+                const productItem = button.closest('.product-item');
+                const quantityInput = productItem.querySelector(".input-number");
+                let quantity = parseInt(quantityInput.value);
+
+                if (button.dataset.type === "plus") {
+                    quantityInput.value = quantity + 1;
+                } else if (button.dataset.type === "minus" && quantity > 1) {
+                    quantityInput.value = quantity - 1;
+                }
+            });
+        });
     }
 
-    // Create product HTML in swiper style
     function createProductHTML(product) {
       return `
         <div class="product-item swiper-slide position-relative border p-3 rounded-lg mb-4">
@@ -889,97 +1279,87 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
         </div>
       `;
     }
+    
+    // Array for tabbed content (now includes Vegetables)
+    const categories = [
+        { name: "Fruits", id: "#productsGridFruits" },
+        { name: "Beverages", id: "#productsGridBeverages" },
+        { name: "Snacks", id: "#productsGridSnacks" },
+        { name: "Dairy", id: "#productsGridDairy" },
+        { name: "Meat", id: "#productsGridMeat" },
+        { name: "Vegetables", id: "#productsGridVegetables" } // NEW
+    ];
 
-    // Render Fruits products
-    function renderFruits(products) {
-      const wrapper = document.querySelector("#productsGridFruits .swiper-wrapper");
-      wrapper.innerHTML = "";
+    // Array for standalone content (now includes all categories)
+    const standaloneCategories = [
+        { name: "Fruits", id: "#standaloneFruits" },
+        { name: "Beverages", id: "#standaloneBeverages" },
+        { name: "Snacks", id: "#standaloneSnacks" },
+        { name: "Dairy", id: "#standaloneDairy" },
+        { name: "Meat", id: "#standaloneMeat" },
+        { name: "Vegetables", id: "#standaloneVegetables" } // NEW
+    ];
 
-      const fruits = products.filter(p => p.category === "Fruits");
+    // The master rendering function
+    function renderAllCategories(allProducts) {
+        // 1. RENDER TABBED SECTIONS
+        categories.forEach(category => {
+            const wrapper = document.querySelector(`${category.id} .swiper-wrapper`);
+            if (!wrapper) return;
 
-      if (fruits.length === 0) {
-        wrapper.innerHTML = '<p class="text-center w-100">No fruits found.</p>';
-        return;
-      }
+            const categoryProducts = allProducts.filter(p => p.category === category.name);
+            wrapper.innerHTML = ""; 
 
-      fruits.forEach(p => wrapper.insertAdjacentHTML("beforeend", createProductHTML(p)));
+            if (categoryProducts.length === 0) {
+                wrapper.innerHTML = `<div class="swiper-slide"><p class="text-center w-100">No ${category.name.toLowerCase()} found.</p></div>`;
+                return;
+            }
 
-      // Quantity buttons
-      wrapper.querySelectorAll('.quantity-left-minus').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const input = btn.closest('.product-item').querySelector('.input-number');
-          let val = parseInt(input.value) || 1;
-          if(val > 1) input.value = val - 1;
+            categoryProducts.forEach(p => wrapper.insertAdjacentHTML("beforeend", createProductHTML(p)));
+            attachEventListeners(wrapper, categoryProducts);
         });
-      });
+        
+        // 2. RENDER STANDALONE SECTIONS
+        standaloneCategories.forEach(category => {
+            const wrapper = document.querySelector(`${category.id} .swiper-wrapper`);
+            if (!wrapper) return;
 
-      wrapper.querySelectorAll('.quantity-right-plus').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const input = btn.closest('.product-item').querySelector('.input-number');
-          let val = parseInt(input.value) || 1;
-          input.value = val + 1;
+            const categoryProducts = allProducts.filter(p => p.category === category.name);
+            wrapper.innerHTML = ""; 
+
+            if (categoryProducts.length === 0) {
+                wrapper.innerHTML = `<div class="swiper-slide"><p class="text-center w-100">No ${category.name.toLowerCase()} found.</p></div>`;
+            } else {
+                categoryProducts.forEach(p => wrapper.insertAdjacentHTML("beforeend", createProductHTML(p)));
+                attachEventListeners(wrapper, categoryProducts);
+            }
+
+            // Initialize Swiper immediately for standalone sections
+            initSwiper(category.id);
         });
-      });
 
-      // Add to Cart buttons
-      wrapper.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.preventDefault();
-          const id = btn.getAttribute('data-id');
-          const product = fruits.find(f => f.id === id);
-          if (!product) return;
-          const quantity = parseInt(btn.closest('.product-item').querySelector('.input-number').value);
-
-          const cart = getCart();
-          const existing = cart.find(item => item.id === id);
-          if (existing) {
-            existing.quantity += quantity;
-          } else {
-            cart.push({
-              id: product.id,
-              name: product.name,
-              price: product.price,
-              quantity,
-              image: product.image
+        // 3. TAB-SWITCHING SWIPER INITIALIZATION
+        // Initialize the Swiper for the *active* tab (Fruits) on initial load
+        initSwiper("#productsGridFruits");
+        
+        // Set up a listener to re-initialize Swiper when any tab is clicked/shown
+        const trendingTabs = document.getElementById('trendingTabs');
+        if (trendingTabs) {
+            trendingTabs.addEventListener('shown.bs.tab', event => {
+                const targetId = event.target.getAttribute('data-bs-target');
+                initSwiper(targetId);
             });
-          }
-
-          saveCart(cart);
-          alert(`${quantity} ${product.name}(s) added to cart!`);
-          console.log("Cart:", cart);
-        });
-      });
-
-      // Initialize Swiper
-      new Swiper(".product-slider", {
-        slidesPerView: 4,
-        spaceBetween: 20,
-        navigation: true,
-        breakpoints: {
-          320: { slidesPerView: 1 },
-          576: { slidesPerView: 2 },
-          768: { slidesPerView: 3 },
-          992: { slidesPerView: 4 },
-        },
-      });
+        }
     }
 
-    // Firebase real-time
+    // Listen for product changes from Firebase
     db.collection("products").onSnapshot(snapshot => {
-      const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      renderFruits(products);
+        const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderAllCategories(products);
     });
 
-    console.log("Trending Fruits swiper loaded...");
-  </script>
-</section>
-
-
-
-
-
-
-
+    console.log("All product sections loaded and integrated with in-memory cart...");
+</script>
 
 
 
@@ -991,134 +1371,7 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
 
 
     
-<!-- Best selling products -->
-    <section class="py-5 overflow-hidden">
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-md-12">
 
-            <div class="section-header d-flex flex-wrap justify-content-between my-5">
-              
-              <h2 class="section-title">Best selling products</h2>
-
-              <div class="d-flex align-items-center">
-                <a href="#" class="btn-link text-decoration-none">View All Categories →</a>
-                <div class="swiper-buttons">
-                  <button class="swiper-prev products-carousel-prev btn btn-primary">❮</button>
-                  <button class="swiper-next products-carousel-next btn btn-primary">❯</button>
-                </div>  
-              </div>
-            </div>
-            
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12">
-
-            <div class="products-carousel swiper">
-              <div class="swiper-wrapper">
-                
-             <div class="product-item swiper-slide">
-  <span class="badge bg-success position-absolute m-3">-15%</span>
-  <a href="#" class="btn-wishlist"><svg width="24" height="24"><use xlink:href="#heart"></use></svg></a>
-  <figure>
-    <a href="index.html" title="Fresh Tomatoes">
-      <img src="images/thumb-tomatoes.png" class="tab-image">
-    </a>
-  </figure>
-  <h3>Fresh Tomatoes</h3>
-  <span class="qty">1 Unit</span><span class="rating"><svg width="24" height="24" class="text-primary"><use xlink:href="#star-solid"></use></svg> 4.5</span>
-  <span class="price">R18.00</span>
-  <div class="d-flex align-items-center justify-content-between">
-    <div class="input-group product-qty">
-      <span class="input-group-btn">
-        <button type="button" class="quantity-left-minus btn btn-danger btn-number" data-type="minus">
-          <svg width="16" height="16"><use xlink:href="#minus"></use></svg>
-        </button>
-      </span>
-      <input type="text" name="quantity" class="form-control input-number" value="1">
-      <span class="input-group-btn">
-        <button type="button" class="quantity-right-plus btn btn-success btn-number" data-type="plus">
-          <svg width="16" height="16"><use xlink:href="#plus"></use></svg>
-        </button>
-      </span>
-    </div>
-    <a href="#" class="nav-link add-to-cart-btn">Add to Cart <iconify-icon icon="uil:shopping-cart"></iconify-icon></a>
-  </div>
-</div>
-
-<div class="product-item swiper-slide">
-  <span class="badge bg-success position-absolute m-3">-15%</span>
-  <a href="#" class="btn-wishlist"><svg width="24" height="24"><use xlink:href="#heart"></use></svg></a>
-  <figure>
-    <a href="index.html" title="Tomato Ketchup">
-      <img src="images/thumb-tomatoketchup.png" class="tab-image">
-    </a>
-  </figure>
-  <h3>Tomato Ketchup</h3>
-  <span class="qty">1 Unit</span><span class="rating"><svg width="24" height="24" class="text-primary"><use xlink:href="#star-solid"></use></svg> 4.5</span>
-  <span class="price">R22.50</span>
-  <div class="d-flex align-items-center justify-content-between">
-    <div class="input-group product-qty">
-      <span class="input-group-btn">
-        <button type="button" class="quantity-left-minus btn btn-danger btn-number" data-type="minus">
-          <svg width="16" height="16"><use xlink:href="#minus"></use></svg>
-        </button>
-      </span>
-      <input type="text" name="quantity" class="form-control input-number" value="1">
-      <span class="input-group-btn">
-        <button type="button" class="quantity-right-plus btn btn-success btn-number" data-type="plus">
-          <svg width="16" height="16"><use xlink:href="#plus"></use></svg>
-        </button>
-      </span>
-    </div>
-    <a href="#" class="nav-link add-to-cart-btn">Add to Cart <iconify-icon icon="uil:shopping-cart"></iconify-icon></a>
-  </div>
-</div>
-
-<div class="product-item swiper-slide">
-  <span class="badge bg-success position-absolute m-3">-15%</span>
-  <a href="#" class="btn-wishlist"><svg width="24" height="24"><use xlink:href="#heart"></use></svg></a>
-  <figure>
-    <a href="index.html" title="Organic Bananas">
-      <img src="images/thumb-bananas.png" class="tab-image">
-    </a>
-  </figure>
-  <h3>Organic Bananas</h3>
-  <span class="qty">1 Unit</span><span class="rating"><svg width="24" height="24" class="text-primary"><use xlink:href="#star-solid"></use></svg> 4.5</span>
-  <span class="price">R5.50</span>
-  <div class="d-flex align-items-center justify-content-between">
-    <div class="input-group product-qty">
-      <span class="input-group-btn">
-        <button type="button" class="quantity-left-minus btn btn-danger btn-number" data-type="minus">
-          <svg width="16" height="16"><use xlink:href="#minus"></use></svg>
-        </button>
-      </span>
-      <input type="text" name="quantity" class="form-control input-number" value="1">
-      <span class="input-group-btn">
-        <button type="button" class="quantity-right-plus btn btn-success btn-number" data-type="plus">
-          <svg width="16" height="16"><use xlink:href="#plus"></use></svg>
-        </button>
-      </span>
-    </div>
-    <a href="#" class="nav-link add-to-cart-btn">Add to Cart <iconify-icon icon="uil:shopping-cart"></iconify-icon></a>
-  </div>
-</div>
-
-
-
-
-
-
-                
-              </div>
-            </div>
-            <!-- / products-carousel -->
-
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="py-5">
       <div class="container-fluid">

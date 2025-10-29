@@ -6,471 +6,956 @@
 <title>Grocery Admin Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 body { font-family: 'Inter', sans-serif; }
+/* Ensure only the active page is displayed */
 .page { display: none; }
 .page.active { display: block; }
 body::-webkit-scrollbar { display: none; }
 body { -ms-overflow-style: none; scrollbar-width: none; }
 .tab-image { width: 100%; height: 150px; object-fit: cover; border-radius: 0.5rem; }
+/* Add a small transition for a smoother feel */
+.product-item { transition: transform 0.2s; }
+.product-item:hover { transform: translateY(-2px); }
 </style>
 </head>
 <body class="bg-gray-100 text-gray-900">
 
-<!-- Loading Spinner -->
 <div id="loading-container" class="flex items-center justify-center min-h-screen bg-gray-100">
-  <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-  </svg>
+  <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
 </div>
 
-<!-- Login / Register -->
 <div id="login-page" class="flex flex-col items-center justify-center min-h-screen bg-gray-100 hidden">
-  <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm text-center">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6" id="login-title">Login</h2>
-    <div class="space-y-4">
-      <input type="email" id="email" placeholder="Email" class="w-full px-4 py-2 border rounded-lg">
-      <input type="password" id="password" placeholder="Password" class="w-full px-4 py-2 border rounded-lg">
-      <select id="role-select" class="w-full px-4 py-2 border rounded-lg">
-        <option value="manager">Manager</option>
-        <option value="assistant">Shop Assistant</option>
-      </select>
-      <button id="auth-btn" class="w-full py-3 px-4 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">Login</button>
-      <p class="text-sm text-gray-500">Or <span id="toggle-auth" class="text-indigo-600 cursor-pointer">Register</span></p>
-    </div>
-  </div>
+  <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm text-center">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6" id="login-title">Login</h2>
+    <div class="space-y-4">
+      <input type="email" id="email" placeholder="Email" class="w-full px-4 py-2 border rounded-lg">
+      <input type="password" id="password" placeholder="Password" class="w-full px-4 py-2 border rounded-lg">
+      <select id="role-select" class="w-full px-4 py-2 border rounded-lg">
+        <option value="manager">Manager</option>
+        <option value="assistant">Shop Assistant</option>
+      </select>
+      <button id="auth-btn" class="w-full py-3 px-4 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">Login</button>
+      <p class="text-sm text-gray-500">Or <span id="toggle-auth" class="text-indigo-600 cursor-pointer">Register</span></p>
+    </div>
+  </div>
 </div>
 
-<!-- Dashboard -->
 <div id="main-dashboard-container" class="flex min-h-screen hidden">
-  <!-- Sidebar -->
-  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 p-6 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:flex lg:flex-col">
-    <div class="flex items-center justify-between lg:justify-start mb-10">
-      <h1 class="text-2xl font-bold text-indigo-600">Grocery Admin</h1>
-      <button id="sidebar-close-btn" class="p-2 text-gray-700 lg:hidden"><i data-lucide="x" class="w-6 h-6"></i></button>
-    </div>
-    <nav id="nav-container" class="space-y-2 flex-grow"></nav>
-    <div class="mt-8 pt-4 border-t border-gray-200">
-      <button id="logout-btn" class="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-        <i data-lucide="log-out" class="w-4 h-4 mr-2"></i> Logout
-      </button>
-    </div>
-  </aside>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 p-6 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:flex lg:flex-col">
+    <div class="flex items-center justify-between lg:justify-start mb-10">
+      <h1 class="text-2xl font-bold text-indigo-600">Grocery Admin</h1>
+      <button id="sidebar-close-btn" class="p-2 text-gray-700 lg:hidden"><i data-lucide="x" class="w-6 h-6"></i></button>
+    </div>
+    <nav id="nav-container" class="space-y-2 flex-grow"></nav>
+    <div class="mt-8 pt-4 border-t border-gray-200">
+      <button id="logout-btn" class="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+        <i data-lucide="log-out" class="w-4 h-4 mr-2"></i> Logout
+      </button>
+    </div>
+  </aside>
 
-  <!-- Main Content -->
-  <main class="flex-1 p-8 overflow-y-auto">
-    <button id="sidebar-open-btn" class="fixed top-4 left-4 z-50 p-2 text-gray-700 bg-white rounded-lg shadow-md lg:hidden">
-      <i data-lucide="menu" class="w-6 h-6"></i>
-    </button>
+    <main class="flex-1 p-8 overflow-y-auto">
+        <button id="sidebar-open-btn" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 p-2 text-gray-700 bg-white rounded-lg shadow-md lg:hidden">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
 
-    <!-- Dashboard Pages -->
-    <div id="dashboard" class="page">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
-      <div id="dashboard-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-    </div>
+        <div id="dashboard" class="page">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+            <div id="dashboard-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"></div>
+            <div class="bg-white p-6 rounded-xl shadow-lg" id="dashboard-chart-area">
+              </div>
+    </div>
 
-    <div id="products" class="page">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Products</h2>
-        <button id="add-product-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition-colors">Add New Product</button>
-      </div>
-      <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
-        <table class="w-full text-left table-auto">
-          <thead>
-            <tr class="bg-gray-50 text-gray-600 uppercase text-sm leading-normal">
-              <th class="py-3 px-6">Product</th>
-              <th class="py-3 px-6">Category</th>
-              <th class="py-3 px-6">Stock</th>
-              <th class="py-3 px-6">Price</th>
-              <th class="py-3 px-6">Unit</th>
-              <th class="py-3 px-6">Rating</th>
-              <th class="py-3 px-6">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="products-table-body" class="text-gray-600 text-sm font-light"></tbody>
-        </table>
-      </div>
-      <div class="product-grid row grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6" id="productsGridAll"></div>
-    </div>
+        <div id="products" class="page">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Products</h2>
+        <button id="add-product-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition-colors">Add New Product</button>
+      </div>
 
-    <div id="sales" class="page">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6">Process Sale</h2>
-      <div class="bg-white p-6 rounded-xl shadow-lg">
-        <label>Product</label>
-        <select id="sale-product" class="w-full p-2 border rounded-lg mb-4"></select>
-        <label>Quantity</label>
-        <input type="number" id="sale-quantity" class="w-full p-2 border rounded-lg mb-4">
-        <button id="confirm-sale" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition-colors">Confirm Sale</button>
-      </div>
-      <h3 class="mt-6 text-xl font-bold">Walk-in Customer Registration</h3>
-      <input type="text" id="customer-name" placeholder="Name" class="w-full p-2 border rounded-lg mb-2">
-      <input type="text" id="customer-phone" placeholder="Phone" class="w-full p-2 border rounded-lg mb-2">
-      <button id="register-customer" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-700 transition-colors">Register Customer</button>
-    </div>
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6 bg-white p-4 rounded-xl shadow-lg">
+        <div>
+          <label for="product-category-filter" class="font-medium text-gray-700 mr-2">Filter by Category:</label>
+          <select id="product-category-filter" class="border px-3 py-2 rounded-lg">
+            <option value="All">All Categories</option>
+            <option value="Fruits">Fruits</option>
+            <option value="Vegetables">Vegetables</option>
+            <option value="Beverages">Beverages</option>
+            <option value="Snacks">Snacks</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Meat">Meat</option>
+          </select>
+        </div>
+        <div>
+          <label for="product-sort" class="font-medium text-gray-700 mr-2">Sort by:</label>
+          <select id="product-sort" class="border px-3 py-2 rounded-lg">
+            <option value="name_asc">Name (A-Z)</option>
+            <option value="name_desc">Name (Z-A)</option>
+            <option value="price_asc">Price (Low to High)</option>
+            <option value="price_desc">Price (High to Low)</option>
+            <option value="stock_desc">Stock (High to Low)</option>
+          </select>
+        </div>
+      </div>
+      
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-6 overflow-x-auto">
+        <table class="w-full text-left table-auto min-w-max">
+          <thead>
+            <tr class="bg-gray-50 text-gray-600 uppercase text-sm leading-normal">
+              <th class="py-3 px-6">Product</th>
+              <th class="py-3 px-6">Category</th>
+              <th class="py-3 px-6">Stock</th>
+              <th class="py-3 px-6">Price</th>
+              <th class="py-3 px-6">Unit</th>
+              <th class="py-3 px-6">Rating</th>
+              <th class="py-3 px-6">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-table-body" class="text-gray-600 text-sm font-light"></tbody>
+        </table>
+      </div>
+            <div class="product-grid row grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4" id="productsGridAll"></div>
+    </div>
 
-    <div id="reports" class="page">
-      <h2 class="text-2xl font-bold mb-4">Sales Reports</h2>
-      <label>Filter by Product:</label>
-      <select id="report-product" class="border px-3 py-2 rounded mb-2 w-full"></select>
-      <label>Start Date:</label>
-      <input type="date" id="report-start" class="border px-3 py-2 rounded mb-2 w-full">
-      <label>End Date:</label>
-      <input type="date" id="report-end" class="border px-3 py-2 rounded mb-2 w-full">
-      <button id="generate-report" class="bg-indigo-600 text-white px-4 py-2 rounded mb-4">Generate</button>
-      <div id="reports-content" class="bg-white p-4 rounded shadow"></div>
-    </div>
+        <div id="sales" class="page">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Process Sale</h2>
+      <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+        <label class="block font-medium mb-1">Product</label>
+        <select id="sale-product" class="w-full p-2 border rounded-lg mb-4"></select>
+        <label class="block font-medium mb-1">Quantity</label>
+        <input type="number" id="sale-quantity" class="w-full p-2 border rounded-lg mb-4" placeholder="Enter quantity to sell">
+        <button id="confirm-sale" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition-colors">Confirm Sale</button>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h3 class="mt-1 text-xl font-bold mb-4">Walk-in Customer Registration</h3>
+        <input type="text" id="customer-name" placeholder="Name" class="w-full p-2 border rounded-lg mb-2">
+        <input type="text" id="customer-phone" placeholder="Phone" class="w-full p-2 border rounded-lg mb-4">
+        <button id="register-customer" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-700 transition-colors">Register Customer</button>
+        <p class="text-xs mt-2 text-gray-500">This adds a record to the customers list for counting/marketing.</p>
+      </div>
+    </div>
 
-    <div id="orders" class="page">
-      <h2 class="text-2xl font-bold mb-4">Supplier Orders</h2>
-      <div id="orders-content" class="bg-white p-4 rounded shadow"></div>
-    </div>
+        <div id="reports" class="page">
+      <h2 class="text-2xl font-bold mb-4">Sales Reports</h2>
+      <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+        <label class="block font-medium mb-1">Filter by Product:</label>
+        <select id="report-product" class="border px-3 py-2 rounded mb-4 w-full"></select>
+        <label class="block font-medium mb-1">Start Date:</label>
+        <input type="date" id="report-start" class="border px-3 py-2 rounded mb-4 w-full">
+        <label class="block font-medium mb-1">End Date:</label>
+        <input type="date" id="report-end" class="border px-3 py-2 rounded mb-4 w-full">
+        <button id="generate-report" class="bg-indigo-600 text-white px-4 py-2 rounded shadow-md hover:bg-indigo-700">Generate Report</button>
+      </div>
+      <div id="reports-content" class="bg-white p-6 rounded-xl shadow-lg mt-6"></div>
+    </div>
 
-    <div id="users" class="page">
-      <h2 class="text-2xl font-bold mb-4">Manage Users</h2>
-      <input type="email" id="new-user-email" placeholder="New User Email" class="border px-3 py-2 rounded mb-2 w-full">
-      <select id="new-user-role" class="border px-3 py-2 rounded mb-2 w-full">
-        <option value="manager">Manager</option>
-        <option value="assistant">Shop Assistant</option>
-      </select>
-      <button id="add-user" class="bg-indigo-600 text-white px-4 py-2 rounded mb-4">Add User</button>
-      <div id="users-list"></div>
-    </div>
-  </main>
+        <div id="orders" class="page">
+      <h2 class="text-2xl font-bold mb-4">Supplier Orders</h2>
+      <div id="orders-content" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      <p class="text-sm text-gray-500 mt-4">Orders are created by the main user interface (not shown here) when stock is low.</p>
+    </div>
+
+        <div id="users" class="page">
+      <h2 class="text-2xl font-bold mb-4">Manage Users</h2>
+      <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+        <h3 class="text-xl font-bold mb-3">Add New User Record (for Role Assignment)</h3>
+        <input type="email" id="new-user-email" placeholder="New User Email" class="border px-3 py-2 rounded mb-2 w-full">
+        <select id="new-user-role" class="border px-3 py-2 rounded mb-4 w-full">
+          <option value="manager">Manager</option>
+          <option value="assistant">Shop Assistant</option>
+        </select>
+        <button id="add-user" class="bg-indigo-600 text-white px-4 py-2 rounded shadow-md hover:bg-indigo-700">Add User Record</button>
+        <p class="text-xs mt-2 text-red-500">Note: This only sets the role. You must create the Firebase Auth user manually.</p>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h3 class="text-xl font-bold mb-3">Current Users (Records)</h3>
+        <div id="users-list"></div>
+      </div>
+    </div>
+  </main>
 </div>
 
-<!-- Product Modal -->
 <div id="product-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50">
-  <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xl font-bold text-gray-800">Add / Edit Product</h3>
-      <button id="product-modal-close" class="text-gray-600 hover:text-gray-900">
-        <i data-lucide="x" class="w-6 h-6"></i>
-      </button>
-    </div>
-    <div class="space-y-4">
-      <input type="text" id="product-name" placeholder="Product Name" class="w-full px-4 py-2 border rounded-lg">
-      <select id="product-category" class="w-full px-4 py-2 border rounded-lg">
-        <option value="">Select Category</option>
-        <option value="Fruits">Fruits</option>
-        <option value="Vegetables">Vegetables</option>
-        <option value="Beverages">Beverages</option>
-        <option value="Snacks">Snacks</option>
-        <option value="Dairy">Dairy</option>
-      </select>
-      <input type="number" id="product-stock" placeholder="Stock" class="w-full px-4 py-2 border rounded-lg">
-      <select id="product-unit" class="w-full px-4 py-2 border rounded-lg">
-        <option value="">Select Unit</option>
-        <option value="kg">kg</option>
-        <option value="g">g</option>
-        <option value="liter">liter</option>
-        <option value="unit">unit</option>
-      </select>
-      <input type="number" step="0.01" id="product-price" placeholder="Price" class="w-full px-4 py-2 border rounded-lg">
-      <input type="text" id="product-discount" placeholder="Discount" class="w-full px-4 py-2 border rounded-lg">
-      <input type="number" id="product-rating" placeholder="Rating (0-5)" min="0" max="5" class="w-full px-4 py-2 border rounded-lg">
-      <input type="file" id="product-image" accept="image/*" class="w-full px-4 py-2 border rounded-lg">
-    </div>
-    <div class="mt-6 flex justify-end space-x-3">
-      <button id="product-modal-cancel" class="px-4 py-2 rounded-lg border hover:bg-gray-50">Cancel</button>
-      <button id="product-modal-save" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Save</button>
-    </div>
-  </div>
+  <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"> 
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xl font-bold text-gray-800">Add / Edit Product</h3>
+      <button id="product-modal-close" class="text-gray-600 hover:text-gray-900">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+      <input type="hidden" id="product-id-hidden">
+    </div>
+    <div class="space-y-4">
+      <input type="text" id="product-name" placeholder="Product Name" class="w-full px-4 py-2 border rounded-lg">
+      <select id="product-category" class="w-full px-4 py-2 border rounded-lg">
+        <option value="">Select Category</option>
+        <option value="Fruits">Fruits</option>
+        <option value="Vegetables">Vegetables</option>
+        <option value="Beverages">Beverages</option>
+        <option value="Snacks">Snacks</option>
+        <option value="Dairy">Dairy</option>
+        <option value="Meat">Meat</option>
+      </select>
+      <input type="number" id="product-stock" placeholder="Stock (e.g. 50)" class="w-full px-4 py-2 border rounded-lg">
+      <select id="product-unit" class="w-full px-4 py-2 border rounded-lg">
+        <option value="">Select Unit</option>
+        <option value="kg">kg</option>
+        <option value="g">g</option>
+        <option value="liter">liter</option>
+        <option value="unit">unit</option>
+      </select>
+      <input type="number" step="0.01" id="product-price" placeholder="Price (e.g. 12.50)" class="w-full px-4 py-2 border rounded-lg">
+      <input type="text" id="product-discount" placeholder="Discount Text (e.g. 10% OFF)" class="w-full px-4 py-2 border rounded-lg">
+      <input type="number" step="0.1" id="product-rating" placeholder="Rating (0-5)" min="0" max="5" class="w-full px-4 py-2 border rounded-lg">
+      <input type="file" id="product-image" accept="image/*" class="w-full px-4 py-2 border rounded-lg">
+    </div>
+    <div class="mt-6 flex justify-end space-x-3">
+      <button id="product-modal-cancel" class="px-4 py-2 rounded-lg border hover:bg-gray-50">Cancel</button>
+      <button id="product-modal-save" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Save</button>
+      <button id="product-modal-delete" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 hidden">Delete</button>
+    </div>
+  </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  lucide.createIcons();
-  const firebaseConfig = {
-    apiKey: "AIzaSyDWH3LoCvRmTUMthsUsIA0MBiqZ4NmFyco",
-    authDomain: "ecome-72c36.firebaseapp.com",
-    projectId: "ecome-72c36",
-    storageBucket: "ecome-72c36.appspot.com",
-    messagingSenderId: "880319220349",
-    appId: "1:880319220349:web:4af4666ec90587a23dbf14",
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+  
+  // 🛑 User's Firebase Configuration 
+  const firebaseConfig = {
+    apiKey: "AIzaSyDWH3LoCvRmTUMthsUsIA0MBiqZ4NmFyco",
+    authDomain: "ecome-72c36.firebaseapp.com",
+    projectId: "ecome-72c36",
+    storageBucket: "ecome-72c36.appspot.com",
+    messagingSenderId: "880319220349",
+    appId: "1:880319220349:web:4af4666ec90587a23dbf14",
+  };
+  
+  // 🛑 User's Cloudinary Credentials
+  const cloudName='dxvjpkrzf';
+  const uploadPreset='grocery_products';
 
-  const loading = document.getElementById('loading-container');
-  const loginPage = document.getElementById('login-page');
-  const mainDashboard = document.getElementById('main-dashboard-container');
-  const authBtn = document.getElementById('auth-btn');
-  const toggleAuth = document.getElementById('toggle-auth');
-  let isRegister = false;
-  let currentRole = '';
-  let editingProductId = null;
-  const cloudName='dxvjpkrzf';
-  const uploadPreset='grocery_products';
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-  // Toggle login/register
-  toggleAuth.addEventListener('click', () => {
-    isRegister = !isRegister;
-    document.getElementById('login-title').innerText = isRegister?'Register':'Login';
-    authBtn.innerText = isRegister?'Register':'Login';
-  });
+  const loading = document.getElementById('loading-container');
+  const loginPage = document.getElementById('login-page');
+  const mainDashboard = document.getElementById('main-dashboard-container');
+  const authBtn = document.getElementById('auth-btn');
+  const toggleAuth = document.getElementById('toggle-auth');
+  const loginTitle = document.getElementById('login-title');
+  const sidebar=document.getElementById('sidebar');
+  const navContainer=document.getElementById('nav-container');
+  const pages=document.querySelectorAll('.page');
 
-  // Login/Register
-  authBtn.addEventListener('click', async ()=>{
-    const email=document.getElementById('email').value;
-    const password=document.getElementById('password').value;
-    const role=document.getElementById('role-select').value;
-    try{
-      let userCredential;
-      if(isRegister){
-        userCredential = await auth.createUserWithEmailAndPassword(email,password);
-        await db.collection('users').doc(userCredential.user.uid).set({ role, email });
-      } else {
-        userCredential = await auth.signInWithEmailAndPassword(email,password);
-      }
-      currentRole=role;
-    }catch(err){ alert(err.message);}
-  });
+  let isRegister = false;
+  let currentRole = '';
+  let editingProductId = null;
+  let allProducts = []; 
+  let activeNavButton = null; 
+  // 💡 CRITICAL FIX: Flag to prevent data reloading on auth state change
+  let dataLoaded = false; 
 
-  // Auth state
-  auth.onAuthStateChanged(async user=>{
-    loading.style.display='none';
-    if(user){
-      loginPage.style.display='none';
-      mainDashboard.classList.remove('hidden');
-      if(!currentRole){
-        const doc=await db.collection('users').doc(user.uid).get();
-        currentRole=doc.exists?doc.data().role:'manager';
-      }
-      setupNav(currentRole);
-      loadProducts();
-      populateSaleProducts();
-      if(currentRole==='manager'){
-        loadUsers();
-        loadSupplierOrders();
-        populateReportProducts();
-      }
-    } else{
-      loginPage.style.display='flex';
-      mainDashboard.classList.add('hidden');
-    }
-  });
+  // --- Usability Fix: Notification System ---
+  const showNotification = (message, type = 'success') => {
+    let color = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const notification = document.createElement('div');
+    notification.className = `fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 p-3 rounded-lg text-white shadow-xl z-[100] ${color} transition-opacity duration-300`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000); 
+  };
 
-  const pages=document.querySelectorAll('.page');
-  const navContainer=document.getElementById('nav-container');
-  const showPage=(page)=>{ pages.forEach(p=>p.classList.remove('active')); const el=document.getElementById(page.toLowerCase()); if(el)el.classList.add('active'); };
+  const resetProductModal = () => {
+    ['product-name','product-category','product-stock','product-unit','product-price','product-discount','product-rating'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('product-image').value = ''; 
+    document.getElementById('product-id-hidden').value = '';
+  };
 
-  const roles={
-    manager:['dashboard','products','reports','orders','users'],
-    assistant:['dashboard','sales']
-  };
-  const setupNav=(role)=>{
-    navContainer.innerHTML='';
-    roles[role].forEach(item=>{
-      const btn=document.createElement('button');
-      btn.textContent=item.charAt(0).toUpperCase()+item.slice(1);
-      btn.className='w-full text-left py-2 px-3 rounded hover:bg-gray-100 transition';
-      btn.addEventListener('click',()=>showPage(item));
-      navContainer.appendChild(btn);
-    });
-    showPage(roles[role][0]);
-  };
+  toggleAuth.addEventListener('click', () => {
+    isRegister = !isRegister;
+    loginTitle.innerText = isRegister ? 'Register' : 'Login';
+    authBtn.innerText = isRegister ? 'Register' : 'Login';
+    toggleAuth.innerText = isRegister ? 'Login' : 'Register'; 
+  });
 
-  // Sidebar toggle
-  const sidebar=document.getElementById('sidebar');
-  document.getElementById('sidebar-open-btn').addEventListener('click',()=>sidebar.classList.remove('-translate-x-full'));
-  document.getElementById('sidebar-close-btn').addEventListener('click',()=>sidebar.classList.add('-translate-x-full'));
+  authBtn.addEventListener('click', async ()=>{
+    const email=document.getElementById('email').value;
+    const password=document.getElementById('password').value;
+    const role=document.getElementById('role-select').value;
+    try{
+      let userCredential;
+      if(isRegister){
+        userCredential = await auth.createUserWithEmailAndPassword(email,password);
+        await db.collection('users').doc(userCredential.user.uid).set({ role, email });
+        currentRole = role; 
+        showNotification('Registration successful! Logging in...', 'success');
+      } else {
+        userCredential = await auth.signInWithEmailAndPassword(email,password);
+      }
+    }catch(err){ showNotification(err.message, 'error');}
+  });
 
-  // Logout
-  document.getElementById('logout-btn').addEventListener('click',()=>auth.signOut());
+  // 🔄 CRITICAL FIX: Auth State Listener with dataLoaded flag
+  auth.onAuthStateChanged(async user=>{
+    loading.style.display='none';
+    if(user){
+      // USER IS LOGGED IN
+      loginPage.style.display='none';
+      mainDashboard.classList.remove('hidden');
+      
+      if(!currentRole){
+        try {
+          const doc=await db.collection('users').doc(user.uid).get();
+          currentRole=doc.exists?doc.data().role:'assistant'; 
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          currentRole = 'assistant'; 
+        }
+      }
+      
+      // 🛑 PREVENT LOOP/RELOAD: Only run initial setup and load data once
+      if (!dataLoaded) {
+        setupNav(currentRole);
+        await loadAllData(); 
+        dataLoaded = true; // Set flag after successful load
+      }
+      
+    } else{
+      // USER IS LOGGED OUT
+      currentRole = ''; 
+      dataLoaded = false; // Reset flag so next login runs data load
+      loginPage.style.display='flex';
+      mainDashboard.classList.add('hidden');
+      isRegister = false;
+      loginTitle.innerText = 'Login';
+      authBtn.innerText = 'Login';
+      toggleAuth.innerText = 'Register';
+    }
+  });
 
-  // Products
-  const productModal=document.getElementById('product-modal');
-  document.getElementById('add-product-btn').addEventListener('click',()=>{ editingProductId=null; productModal.classList.remove('hidden'); });
-  const closeProductModal=()=>productModal.classList.add('hidden');
-  document.getElementById('product-modal-close').addEventListener('click',closeProductModal);
-  document.getElementById('product-modal-cancel').addEventListener('click',closeProductModal);
+  // 🛡️ CRITICAL FIX: Added try...catch blocks for robustness
+  const loadAllData = async () => {
+    try {
+      await loadProducts();
+    } catch (e) {
+      console.error("Error loading products:", e);
+      showNotification("Failed to load products. Check permissions.", 'error');
+    }
 
-  const loadProducts=async()=>{
-    const snapshot=await db.collection('products').get();
-    const products=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
-    renderProducts(products);
-  };
+    // Always populate sales menu (even if products load failed, to be safe)
+    populateSaleProducts(); 
 
-  const renderProducts=(products)=>{
-    const tbody=document.getElementById('products-table-body');
-    const grid=document.getElementById('productsGridAll');
-    tbody.innerHTML=''; grid.innerHTML='';
-    products.forEach(p=>{
-      tbody.innerHTML+=`
-        <tr class="border-b border-gray-200 hover:bg-gray-50">
-          <td class="py-3 px-6">${p.name}</td>
-          <td class="py-3 px-6">${p.category}</td>
-          <td class="py-3 px-6">${p.stock}</td>
-          <td class="py-3 px-6">R ${parseFloat(p.price).toFixed(2)}</td>
-          <td class="py-3 px-6">${p.unit}</td>
-          <td class="py-3 px-6">${p.rating}</td>
-          <td class="py-3 px-6">
-            <button class="text-indigo-600 hover:underline" onclick="editProduct('${p.id}')">Edit</button>
-            <button class="text-red-600 hover:underline" onclick="deleteProduct('${p.id}')">Delete</button>
-          </td>
-        </tr>
-      `;
-      grid.innerHTML+=`
-        <div class="product-item border p-3 rounded-lg relative">
-          <span class="badge bg-success absolute top-2 left-2 px-2 py-1 rounded">${p.discount||''}</span>
-          <figure><img src="${p.image}" class="tab-image mb-2"></figure>
-          <h3 class="font-bold">${p.name}</h3>
-          <span class="qty">${p.stock} ${p.unit}</span>
-          <span class="rating block">⭐ ${p.rating}</span>
-          <span class="price block">R ${parseFloat(p.price).toFixed(2)}</span>
-        </div>
-      `;
-    });
-  };
+    if(currentRole==='manager'){
+      try { await loadDashboardMetrics(); } catch (e) { console.error("Metrics failed:", e); showNotification("Dashboard Metrics failed.", 'error'); }
+      try { await loadUsers(); } catch (e) { console.error("Users failed:", e); showNotification("User management failed.", 'error'); }
+      try { await loadSupplierOrders(); } catch (e) { console.error("Orders failed:", e); showNotification("Order loading failed.", 'error'); }
+      populateReportProducts();
+    } else {
+      try { await loadDashboardMetrics(false); } catch (e) { console.error("Assistant Metrics failed:", e); }
+    }
+  }
 
-  window.editProduct=async(id)=>{
-    editingProductId=id;
-    const doc=await db.collection('products').doc(id).get();
-    const p=doc.data();
-    ['name','category','stock','unit','price','discount','rating'].forEach(f=>{
-      document.getElementById(`product-${f}`).value=p[f]||'';
-    });
-    productModal.classList.remove('hidden');
-  };
+  // --- Usability Fix: Active Link Highlighting ---
+  const showPage=(page)=>{ 
+    pages.forEach(p=>p.classList.remove('active')); 
+    const el=document.getElementById(page.toLowerCase()); 
+    if(el)el.classList.add('active'); 
 
-  window.deleteProduct=async(id)=>{
-    await db.collection('products').doc(id).delete();
-    loadProducts();
-    populateSaleProducts();
-    populateReportProducts();
-  };
+    if (activeNavButton) {
+      activeNavButton.classList.remove('bg-indigo-600', 'text-white');
+      activeNavButton.classList.add('text-gray-700', 'hover:bg-gray-100');
+    }
 
-  document.getElementById('product-modal-save').addEventListener('click', async ()=>{
-    const name=document.getElementById('product-name').value.trim();
-    const category=document.getElementById('product-category').value;
-    const stock=parseInt(document.getElementById('product-stock').value);
-    const unit=document.getElementById('product-unit').value;
-    const price=parseFloat(document.getElementById('product-price').value);
-    const discount=document.getElementById('product-discount').value.trim();
-    const rating=parseFloat(document.getElementById('product-rating').value);
-    const imageInput=document.getElementById('product-image');
-    if(!name||!category||isNaN(stock)||!unit||isNaN(price)||isNaN(rating)||(!imageInput.files.length && !editingProductId)){
-      alert('Please fill all fields and select image'); return;
-    }
-    const uploadImageToCloudinary=(file)=>{
-      const formData=new FormData();
-      formData.append('file',file);
-      formData.append('upload_preset',uploadPreset);
-      return fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`,{method:'POST',body:formData}).then(res=>res.json());
-    };
-    let imageUrl=null;
-    if(imageInput.files.length){ const res=await uploadImageToCloudinary(imageInput.files[0]); imageUrl=res.secure_url; }
-    const data={name,category,stock,unit,price,discount,rating};
-    if(imageUrl) data.image=imageUrl;
-    if(editingProductId) await db.collection('products').doc(editingProductId).update(data);
-    else await db.collection('products').add(data);
-    closeProductModal(); loadProducts(); populateSaleProducts(); populateReportProducts();
-    ['product-name','product-category','product-stock','product-unit','product-price','product-discount','product-rating','product-image'].forEach(id=>document.getElementById(id).value='');
-  });
+    const newActiveButton = Array.from(navContainer.querySelectorAll('button')).find(btn => 
+      btn.textContent.trim().toLowerCase().includes(page.toLowerCase())
+    );
 
-  // Sales
-  const populateSaleProducts=async()=>{
-    const snapshot=await db.collection('products').get();
-    const saleSelect=document.getElementById('sale-product');
-    saleSelect.innerHTML='';
-    snapshot.docs.forEach(doc=>{
-      const p=doc.data();
-      const opt=document.createElement('option');
-      opt.value=doc.id; opt.textContent=`${p.name} - R ${p.price}`;
-      saleSelect.appendChild(opt);
-    });
-  };
+    if (newActiveButton) {
+      newActiveButton.classList.remove('text-gray-700', 'hover:bg-gray-100');
+      newActiveButton.classList.add('bg-indigo-600', 'text-white');
+      activeNavButton = newActiveButton;
+    }
+  };
 
-  document.getElementById('confirm-sale').addEventListener('click',async()=>{
-    const productId=document.getElementById('sale-product').value;
-    const quantity=parseInt(document.getElementById('sale-quantity').value);
-    if(!productId||isNaN(quantity)||quantity<=0){ alert('Select product and quantity'); return; }
-    const doc=await db.collection('products').doc(productId).get();
-    const product=doc.data();
-    if(quantity>product.stock){ alert('Not enough stock'); return; }
-    await db.collection('sales').add({ productId, quantity, timestamp:new Date(), userId:auth.currentUser.uid });
-    await db.collection('products').doc(productId).update({ stock:product.stock-quantity });
-    alert('Sale recorded'); document.getElementById('sale-quantity').value='';
-    loadProducts(); populateSaleProducts(); populateReportProducts();
-  });
+  const roles={
+    manager:['dashboard','products','reports','orders','users'],
+    assistant:['dashboard','sales']
+  };
+  
+  const setupNav=(role)=>{
+    navContainer.innerHTML='';
+    const userPages = roles[role]; 
+    
+    userPages.forEach(item=>{
+      const icon = getNavIcon(item); 
+      const btn=document.createElement('button');
+      btn.innerHTML=`<i data-lucide="${icon}" class="w-4 h-4 mr-2"></i> ${item.charAt(0).toUpperCase()+item.slice(1)}`;
+      btn.className='w-full text-left py-2 px-3 rounded flex items-center text-gray-700 hover:bg-gray-100 transition';
+      
+      btn.addEventListener('click',()=>{
+        showPage(item);
+        sidebar.classList.add('-translate-x-full'); 
+      });
+      navContainer.appendChild(btn);
+    });
+    
+    lucide.createIcons();
+    showPage(userPages[0]);
+  };
+  
+  const getNavIcon = (item) => {
+    switch(item) {
+      case 'dashboard': return 'layout-dashboard';
+      case 'products': return 'shopping-bag';
+      case 'reports': return 'bar-chart';
+      case 'orders': return 'package';
+      case 'users': return 'users';
+      case 'sales': return 'receipt';
+      default: return 'circle';
+    }
+  }
 
-  // Walk-in customer
-  document.getElementById('register-customer').addEventListener('click',async()=>{
-    const name=document.getElementById('customer-name').value.trim();
-    const phone=document.getElementById('customer-phone').value.trim();
-    if(!name||!phone){ alert('Fill customer details'); return; }
-    await db.collection('customers').add({ name, phone, registeredAt:new Date() });
-    alert('Customer registered'); document.getElementById('customer-name').value=''; document.getElementById('customer-phone').value='';
-  });
+  // --- Dashboard Enhancement: Metrics and Chart ---
+  const loadDashboardMetrics = async (isManager = true) => {
+    const productsSnapshot = await db.collection('products').get();
+    const salesSnapshot = await db.collection('sales').get();
+    const customersSnapshot = await db.collection('customers').get();
+    
+    const totalProducts = productsSnapshot.size;
+    const totalSales = salesSnapshot.size;
+    const totalCustomers = customersSnapshot.size;
+    
+    let totalRevenue = 0;
+    const salesData = salesSnapshot.docs.map(doc => doc.data());
 
-  // Reports
-  const populateReportProducts=async()=>{
-    const snapshot=await db.collection('products').get();
-    const reportSelect=document.getElementById('report-product');
-    reportSelect.innerHTML='<option value="">All Products</option>';
-    snapshot.docs.forEach(doc=>{
-      const p=doc.data(); const opt=document.createElement('option'); opt.value=doc.id; opt.textContent=p.name; reportSelect.appendChild(opt);
-    });
-  };
+    for (const sale of salesData) {
+      const product = allProducts.find(p => p.id === sale.productId);
+      if (product) {
+        totalRevenue += (sale.price || product.price) * sale.quantity;
+      }
+    }
 
-  document.getElementById('generate-report').addEventListener('click',async()=>{
-    const productId=document.getElementById('report-product').value;
-    const start=document.getElementById('report-start').value?new Date(document.getElementById('report-start').value):null;
-    const end=document.getElementById('report-end').value?new Date(document.getElementById('report-end').value):null;
-    let snapshot=await db.collection('sales').get();
-    let sales=snapshot.docs.map(d=>({id:d.id,...d.data()}));
-    if(productId) sales=sales.filter(s=>s.productId===productId);
-    if(start) sales=sales.filter(s=>s.timestamp.toDate()>=start);
-    if(end) sales=sales.filter(s=>s.timestamp.toDate()<=end);
-    const content=document.getElementById('reports-content');
-    content.innerHTML='<h3 class="font-bold mb-2">Sales</h3>';
-    if(sales.length===0){ content.innerHTML+='<p>No sales found</p>'; return; }
-    sales.forEach(s=>{
-      content.innerHTML+=`<p>${s.productId} - Qty: ${s.quantity} - ${new Date(s.timestamp.toDate()).toLocaleString()}</p>`;
-    });
-  });
+    const metricsContainer = document.getElementById('dashboard-metrics');
+    let metricsHtml = `
+      ${createMetricCard('Products', totalProducts, 'shopping-bag', 'text-blue-500', 'bg-blue-100')}
+      ${createMetricCard('Sales', totalSales, 'trending-up', 'text-green-500', 'bg-green-100')}
+      ${createMetricCard('Revenue', `R ${totalRevenue.toFixed(2)}`, 'dollar-sign', 'text-purple-500', 'bg-purple-100')}
+      ${createMetricCard('Customers', totalCustomers, 'users', 'text-orange-500', 'bg-orange-100')}
+    `;
 
-  // Users
-  const loadUsers=async()=>{
-    const snapshot=await db.collection('users').get();
-    const list=document.getElementById('users-list'); list.innerHTML='';
-    snapshot.docs.forEach(doc=>{
-      const u=doc.data();
-      list.innerHTML+=`<div class="flex justify-between p-2 border mb-1 rounded">${u.email} (${u.role}) <button class="text-red-600" onclick="deleteUser('${doc.id}')">Delete</button></div>`;
-    });
-  };
-  document.getElementById('add-user').addEventListener('click',async()=>{
-    const email=document.getElementById('new-user-email').value.trim();
-    const role=document.getElementById('new-user-role').value;
-    if(!email||!role){ alert('Fill details'); return; }
-    await db.collection('users').add({ email, role });
-    document.getElementById('new-user-email').value=''; loadUsers();
-  });
-  window.deleteUser=async(id)=>{ await db.collection('users').doc(id).delete(); loadUsers(); };
+    if (isManager) {
+      const ordersSnapshot = await db.collection('supplierOrders').get();
+      const pendingOrders = ordersSnapshot.docs.filter(doc => doc.data().status !== 'Approved' && doc.data().status !== 'Rejected').length;
+      metricsHtml += createMetricCard('Pending Orders', pendingOrders, 'package', 'text-red-500', 'bg-red-100');
+    }
 
-  // Supplier Orders
-  const loadSupplierOrders=async()=>{
-    const snapshot=await db.collection('supplierOrders').get();
-    const container=document.getElementById('orders-content');
-    container.innerHTML='';
-    snapshot.docs.forEach(doc=>{
-      const o=doc.data();
-      container.innerHTML+=`<div class="border p-2 mb-2 rounded">
-        <p>Product: ${o.productName} - Qty: ${o.quantity} - Status: ${o.status||'Pending'}</p>
-        ${o.status!=='Pending'?'':`<button class="bg-green-600 text-white px-2 py-1 rounded mr-2" onclick="approveOrder('${doc.id}')">Approve</button>
-        <button class="bg-red-600 text-white px-2 py-1 rounded" onclick="rejectOrder('${doc.id}')">Reject</button>`}
-      </div>`;
-    });
-  };
-  window.approveOrder=async(id)=>{ await db.collection('supplierOrders').doc(id).update({ status:'Approved' }); loadSupplierOrders(); };
-  window.rejectOrder=async(id)=>{ await db.collection('supplierOrders').doc(id).update({ status:'Rejected' }); loadSupplierOrders(); };
+    metricsContainer.innerHTML = metricsHtml;
+    lucide.createIcons(); 
+    
+    const chartArea = document.getElementById('dashboard-chart-area');
+    if (isManager) {
+      renderSalesChart(salesData);
+    } else {
+      chartArea.innerHTML = '<p class="text-gray-500">Sales chart available for Managers only.</p>';
+    }
+  }
 
+  const renderSalesChart = (sales) => {
+    const chartContainer = document.getElementById('dashboard-chart-area');
+    if (!chartContainer) return;
+
+    const productSales = sales.reduce((acc, sale) => {
+      acc[sale.productId] = (acc[sale.productId] || 0) + sale.quantity;
+      return acc;
+    }, {});
+
+    const topSales = Object.entries(productSales)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
+    if (topSales.length === 0) {
+      chartContainer.innerHTML = '<p class="text-gray-500">No sales data to display yet.</p>';
+      return;
+    }
+
+    const maxQuantity = topSales[0][1];
+    let chartHtml = `<h3 class="text-xl font-bold mb-4">Top 5 Products by Quantity Sold</h3><div class="space-y-3">`;
+
+    topSales.forEach(([productId, quantity]) => {
+      const product = allProducts.find(p => p.id === productId);
+      const name = product ? product.name : `Product ID: ${productId}`;
+      const width = Math.round((quantity / maxQuantity) * 80); 
+
+      chartHtml += `
+        <div>
+          <p class="text-sm font-medium mb-1">${name} (${quantity})</p>
+          <div class="h-4 bg-indigo-200 rounded-full">
+            <div class="h-full bg-indigo-600 rounded-full" style="width: ${width}%;"></div>
+          </div>
+        </div>
+      `;
+    });
+
+    chartHtml += `</div>`;
+    chartContainer.innerHTML = chartHtml;
+  }
+  // --- End Dashboard Enhancement ---
+
+  const createMetricCard = (title, value, icon, iconColor, bgColor) => {
+    return `
+      <div class="bg-white p-6 rounded-xl shadow-lg flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500">${title}</p>
+          <p class="text-3xl font-bold text-gray-900">${value}</p>
+          </div>
+        <div class="p-3 rounded-full ${bgColor}">
+          <i data-lucide="${icon}" class="w-6 h-6 ${iconColor}"></i>
+        </div>
+      </div>
+    `;
+  }
+  
+  document.getElementById('sidebar-open-btn').addEventListener('click',()=>sidebar.classList.remove('-translate-x-full'));
+  document.getElementById('sidebar-close-btn').addEventListener('click',()=>sidebar.classList.add('-translate-x-full'));
+
+  document.getElementById('logout-btn').addEventListener('click',()=>auth.signOut());
+
+  const productModal=document.getElementById('product-modal');
+  document.getElementById('add-product-btn').addEventListener('click',()=>{ 
+    editingProductId=null; 
+    resetProductModal(); 
+    productModal.classList.remove('hidden'); 
+    document.getElementById('product-modal-delete').classList.add('hidden'); 
+  });
+  
+  const closeProductModal=()=>{ 
+    productModal.classList.add('hidden'); 
+    resetProductModal(); 
+    editingProductId=null;
+  };
+  
+  document.getElementById('product-modal-close').addEventListener('click',closeProductModal);
+  document.getElementById('product-modal-cancel').addEventListener('click',closeProductModal);
+
+  const loadProducts=async()=>{
+    const snapshot=await db.collection('products').get();
+    allProducts=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+    applyFiltersAndSort(); 
+  };
+
+  // --- NEW: Filtering and Sorting Logic ---
+  const applyFiltersAndSort = () => {
+    const categoryFilter = document.getElementById('product-category-filter') ? document.getElementById('product-category-filter').value : 'All';
+    const sortBy = document.getElementById('product-sort') ? document.getElementById('product-sort').value : 'name_asc';
+
+    let filteredProducts = allProducts;
+
+    // 1. Filter Logic
+    if (categoryFilter !== 'All') {
+      filteredProducts = filteredProducts.filter(p => p.category === categoryFilter);
+    }
+
+    // 2. Sorting Logic
+    filteredProducts.sort((a, b) => {
+      if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
+      if (sortBy === 'name_desc') return b.name.localeCompare(a.name);
+      if (sortBy === 'price_asc') return a.price - b.price;
+      if (sortBy === 'price_desc') return b.price - a.price;
+      if (sortBy === 'stock_desc') return b.stock - a.stock;
+      return 0;
+    });
+
+    renderProducts(filteredProducts);
+  };
+
+  const renderProducts=(products)=>{
+    const tbody=document.getElementById('products-table-body');
+    const grid=document.getElementById('productsGridAll');
+    tbody.innerHTML=''; grid.innerHTML='';
+
+    if (products.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="py-3 px-6 text-center text-gray-500">No products found.</td></tr>';
+      grid.innerHTML = '<p class="text-center text-gray-500 col-span-full">No products found.</p>';
+      return;
+    }
+    
+    products.forEach(p=>{
+      const actionButtons = currentRole === 'manager' ? `
+        <button class="text-indigo-600 hover:underline" onclick="editProduct('${p.id}')">Edit</button>
+        <button class="text-red-600 hover:underline ml-2" onclick="deleteProduct('${p.id}')">Delete</button>
+      ` : '';
+      tbody.innerHTML+=`
+        <tr class="border-b border-gray-200 hover:bg-gray-50">
+          <td class="py-3 px-6">${p.name}</td>
+          <td class="py-3 px-6">${p.category}</td>
+          <td class="py-3 px-6">${p.stock}</td>
+          <td class="py-3 px-6">R ${parseFloat(p.price).toFixed(2)}</td>
+          <td class="py-3 px-6">${p.unit}</td>
+          <td class="py-3 px-6">${p.rating}</td>
+          <td class="py-3 px-6">${actionButtons}</td>
+        </tr>
+      `;
+      
+      // Product Grid View 
+      grid.innerHTML+=`
+        <div class="product-item border bg-white p-3 rounded-xl shadow-md relative">
+          <span class="badge ${p.discount ? 'bg-indigo-500 text-white' : 'hidden'} absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold">${p.discount||''}</span>
+          <figure><img src="${p.image||'https://via.placeholder.com/150'}" class="tab-image" alt="${p.name}"></figure>
+          <h3 class="font-bold text-base mt-2">${p.name}</h3>
+          <span class="qty text-gray-600 block text-sm">${p.stock} ${p.unit} in stock</span>
+          <div class="flex items-center justify-between mt-1">
+            <span class="rating block text-yellow-500 text-sm">⭐ ${p.rating}</span>
+            <span class="price block text-lg font-bold text-indigo-600">R ${parseFloat(p.price).toFixed(2)}</span>
+          </div>
+        </div>
+      `;
+    });
+    document.getElementById('add-product-btn').style.display = currentRole === 'manager' ? 'inline-block' : 'none';
+  };
+  // --- End Filtering and Sorting Logic ---
+
+  window.editProduct=async(id)=>{
+    if(currentRole !== 'manager') return; 
+    editingProductId=id;
+    document.getElementById('product-id-hidden').value = id; 
+    try {
+      const doc=await db.collection('products').doc(id).get();
+      const p=doc.data();
+      ['name','category','stock','unit','price','discount','rating'].forEach(f=>{
+        document.getElementById(`product-${f}`).value=p[f]||'';
+      });
+      productModal.classList.remove('hidden');
+      document.getElementById('product-modal-delete').classList.remove('hidden'); 
+    } catch (error) {
+      console.error("Error fetching product for edit:", error);
+      showNotification('Failed to load product details.', 'error');
+    }
+  };
+
+  window.deleteProduct=async(id)=>{
+    if(currentRole !== 'manager') return; 
+    if(!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await db.collection('products').doc(id).delete();
+      await loadAllData();
+      showNotification('Product deleted successfully!', 'success');
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      showNotification('Failed to delete product. Check permissions.', 'error');
+    }
+  };
+  
+  document.getElementById('product-modal-delete').addEventListener('click', async () => {
+    if (editingProductId) {
+      await deleteProduct(editingProductId);
+      closeProductModal();
+    }
+  });
+
+  document.getElementById('product-modal-save').addEventListener('click', async ()=>{
+    if(currentRole !== 'manager') { showNotification('Access Denied', 'error'); return; } 
+    const name=document.getElementById('product-name').value.trim();
+    const category=document.getElementById('product-category').value;
+    const stock=parseInt(document.getElementById('product-stock').value);
+    const unit=document.getElementById('product-unit').value;
+    const price=parseFloat(document.getElementById('product-price').value);
+    const discount=document.getElementById('product-discount').value.trim();
+    const rating=parseFloat(document.getElementById('product-rating').value);
+    const imageInput=document.getElementById('product-image');
+    
+    if(!name||!category||isNaN(stock)||!unit||isNaN(price)||isNaN(rating)){ 
+      showNotification('Please fill all fields (Stock, Price, Rating must be numbers).', 'error'); return;
+    }
+    
+    const uploadImageToCloudinary=(file)=>{
+      const formData=new FormData();
+      formData.append('file',file);
+      formData.append('upload_preset',uploadPreset);
+      return fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`,{method:'POST',body:formData}).then(res=>res.json());
+    };
+    
+    let imageUrl=null;
+    if(imageInput.files.length){ 
+      try {
+        const res=await uploadImageToCloudinary(imageInput.files[0]); 
+        imageUrl=res.secure_url; 
+      } catch (e) {
+        console.error("Cloudinary upload failed:", e);
+        showNotification("Image upload failed. Check Cloudinary config.", 'error');
+        return;
+      }
+    }
+    
+    const data={name,category,stock,unit,price,discount,rating, updatedAt: firebase.firestore.FieldValue.serverTimestamp()};
+    if(imageUrl) data.image=imageUrl;
+    
+    try {
+      if(editingProductId) {
+        await db.collection('products').doc(editingProductId).update(data);
+        showNotification('Product updated successfully!', 'success');
+      }
+      else {
+        if(!data.image){ showNotification('Please select an image for a new product.', 'error'); return; }
+        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        await db.collection('products').add(data);
+        showNotification('Product added successfully!', 'success');
+      }
+    } catch (error) {
+      console.error("Error saving product data:", error);
+      showNotification('Failed to save product. Check database permissions.', 'error');
+      return;
+    }
+    
+    closeProductModal(); 
+    loadAllData();
+  });
+
+  const populateSaleProducts=()=>{
+    const saleSelect=document.getElementById('sale-product');
+    saleSelect.innerHTML='<option value="">-- Select Product --</option>';
+    allProducts.forEach(p=>{
+      const opt=document.createElement('option');
+      opt.value=p.id; 
+      opt.textContent=`${p.name} - R ${p.price} (${p.stock} in stock)`;
+      saleSelect.appendChild(opt);
+    });
+  };
+
+  document.getElementById('confirm-sale').addEventListener('click',async()=>{
+    const productId=document.getElementById('sale-product').value;
+    const quantity=parseInt(document.getElementById('sale-quantity').value);
+    if(!productId||isNaN(quantity)||quantity<=0){ showNotification('Select product and quantity', 'error'); return; }
+    
+    const product=allProducts.find(p => p.id === productId);
+    if(!product){ showNotification('Product not found in database.', 'error'); return; }
+    
+    if(quantity>product.stock){ showNotification(`Not enough stock. Only ${product.stock} ${product.unit} available.`, 'error'); return; }
+    
+    try {
+      await db.runTransaction(async (transaction) => {
+        const productRef = db.collection('products').doc(productId);
+        const productDoc = await transaction.get(productRef);
+
+        if (!productDoc.exists) {
+          throw "Product does not exist!";
+        }
+
+        const newStock = productDoc.data().stock - quantity;
+        if (newStock < 0) {
+          throw "Stock is less than sale quantity after re-check.";
+        }
+
+        transaction.update(productRef, { stock: newStock });
+
+        transaction.set(db.collection('sales').doc(), { 
+          productId, 
+          productName: product.name, 
+          price: product.price, 
+          quantity, 
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+          userId: auth.currentUser.uid 
+        });
+      });
+      
+      showNotification('Sale recorded successfully!', 'success'); 
+      document.getElementById('sale-quantity').value='';
+      loadAllData(); 
+    } catch (e) {
+      console.error("Transaction failed: ", e);
+      showNotification(`Sale failed: ${e.message || e}`, 'error');
+    }
+  });
+
+  document.getElementById('register-customer').addEventListener('click',async()=>{
+    const name=document.getElementById('customer-name').value.trim();
+    const phone=document.getElementById('customer-phone').value.trim();
+    if(!name||!phone){ showNotification('Fill customer details', 'error'); return; }
+    try {
+      await db.collection('customers').add({ name, phone, registeredAt:firebase.firestore.FieldValue.serverTimestamp() });
+      showNotification('Customer registered', 'success'); document.getElementById('customer-name').value=''; document.getElementById('customer-phone').value='';
+      if (currentRole === 'manager') loadDashboardMetrics();
+    } catch (error) {
+      console.error("Error registering customer:", error);
+      showNotification('Failed to register customer. Check permissions.', 'error');
+    }
+  });
+
+  const populateReportProducts=()=>{
+    const reportSelect=document.getElementById('report-product');
+    reportSelect.innerHTML='<option value="">All Products</option>';
+    allProducts.forEach(p=>{
+      const opt=document.createElement('option'); opt.value=p.id; opt.textContent=p.name; reportSelect.appendChild(opt);
+    });
+  };
+
+  document.getElementById('generate-report').addEventListener('click',async()=>{
+    if(currentRole !== 'manager') { showNotification('Access Denied', 'error'); return; } 
+    
+    const productId=document.getElementById('report-product').value;
+    const start=document.getElementById('report-start').value?new Date(document.getElementById('report-start').value):null;
+    const end=document.getElementById('report-end').value?new Date(document.getElementById('report-end').value):null;
+    
+    if (end) end.setHours(23, 59, 59, 999);
+    
+    let query = db.collection('sales').orderBy('timestamp', 'desc');
+    
+    if(start) query = query.where('timestamp', '>=', start);
+    if(end) query = query.where('timestamp', '<=', end);
+    
+    try {
+      let snapshot=await query.get();
+      let sales=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      
+      if(productId) sales=sales.filter(s=>s.productId===productId);
+      
+      const content=document.getElementById('reports-content');
+      content.innerHTML='<h3 class="font-bold mb-4 text-xl">Generated Sales Report</h3>';
+      if(sales.length===0){ content.innerHTML+='<p>No sales found for the selected criteria.</p>'; return; }
+      
+      let totalRevenue = 0;
+      const salesHtml = sales.map(s=>{
+        const product = allProducts.find(p => p.id === s.productId);
+        const productName = product ? product.name : (s.productName || 'Unknown Product');
+        const salePrice = s.price || (product ? product.price : 0); 
+        const totalSale = salePrice * s.quantity;
+        totalRevenue += totalSale;
+        return `<p class="border-b pb-1 mb-1 text-sm">${productName} - Qty: ${s.quantity} x R${salePrice.toFixed(2)} = <span class="font-semibold text-indigo-600">R${totalSale.toFixed(2)}</span> (${s.timestamp.toDate().toLocaleString()})</p>`;
+      }).join('');
+      
+      content.innerHTML += `
+        <div class="mb-4 p-3 bg-indigo-50 text-indigo-800 font-bold rounded-lg shadow-inner">
+          Total Revenue: R ${totalRevenue.toFixed(2)}
+        </div>
+        ${salesHtml}
+      `;
+    } catch (error) {
+      console.error("Error generating report:", error);
+      document.getElementById('reports-content').innerHTML = '<p class="text-red-500">Failed to generate report. Check database permissions.</p>';
+    }
+  });
+
+  const loadUsers=async()=>{
+    if(currentRole !== 'manager') return; 
+    try {
+      const snapshot=await db.collection('users').get();
+      const list=document.getElementById('users-list'); list.innerHTML='';
+      snapshot.docs.forEach(doc=>{
+        const u=doc.data();
+        if(u.email !== auth.currentUser.email) { 
+          list.innerHTML+=`<div class="flex justify-between items-center p-3 border-b hover:bg-gray-50 rounded">${u.email} (${u.role}) <button class="text-red-600 hover:text-red-800" onclick="deleteUser('${doc.id}')">Delete</button></div>`;
+        } else {
+          list.innerHTML+=`<div class="flex justify-between items-center p-3 border-b bg-gray-50 rounded">${u.email} (${u.role}) <span class="text-gray-500 text-sm"> (You)</span></div>`;
+        }
+      });
+    } catch (error) {
+      console.error("Error loading users:", error);
+      document.getElementById('users-list').innerHTML = '<p class="text-red-500">Failed to load users. Check permissions.</p>';
+    }
+  };
+  document.getElementById('add-user').addEventListener('click',async()=>{
+    if(currentRole !== 'manager') { showNotification('Access Denied', 'error'); return; } 
+    const email=document.getElementById('new-user-email').value.trim();
+    const role=document.getElementById('new-user-role').value;
+    if(!email||!role){ showNotification('Fill details', 'error'); return; }
+    try {
+      await db.collection('users').add({ email, role, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      document.getElementById('new-user-email').value=''; 
+      showNotification('User record added. You must create the Firebase Auth user manually.', 'success');
+      loadUsers();
+    } catch (error) {
+      console.error("Error adding user:", error);
+      showNotification('Failed to add user record. Check permissions.', 'error');
+    }
+  });
+  window.deleteUser=async(id)=>{ 
+    if(currentRole !== 'manager') return; 
+    if(!confirm('Are you sure you want to delete this user record? This does NOT delete their Firebase Auth account.')) return;
+    try {
+      await db.collection('users').doc(id).delete(); 
+      showNotification('User record deleted.', 'success');
+      loadUsers(); 
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      showNotification('Failed to delete user record. Check permissions.', 'error');
+    }
+  };
+
+  const loadSupplierOrders=async()=>{
+    if(currentRole !== 'manager') return; 
+    try {
+      const snapshot=await db.collection('supplierOrders').orderBy('timestamp', 'desc').get();
+      const container=document.getElementById('orders-content');
+      container.innerHTML='';
+      
+      if (snapshot.empty) {
+        container.innerHTML = '<p class="text-gray-500 col-span-full">No supplier orders found.</p>';
+        return;
+      }
+
+      snapshot.docs.forEach(doc=>{
+        const o=doc.data();
+        let statusColor = 'text-gray-500';
+        if (o.status === 'Approved') statusColor = 'text-green-600';
+        if (o.status === 'Rejected') statusColor = 'text-red-600';
+
+        container.innerHTML+=`<div class="border p-4 mb-2 rounded-xl shadow-md bg-white">
+          <p class="font-bold text-lg">${o.productName || o.productId || 'Unknown Product'}</p>
+          <p class="text-gray-600">Quantity: ${o.quantity}</p>
+          <p>Status: <span class="font-semibold ${statusColor}">${o.status||'Pending'}</span></p>
+          ${o.status!=='Approved' && o.status!=='Rejected' ? `
+            <div class="mt-3 pt-3 border-t border-gray-100">
+              <button class="bg-green-600 text-white px-3 py-1 rounded text-sm mr-2 hover:bg-green-700" onclick="approveOrder('${doc.id}')">Approve</button>
+              <button class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700" onclick="rejectOrder('${doc.id}')">Reject</button>
+          </div>` : ''}
+        </div>`;
+      });
+    } catch (error) {
+      console.error("Error loading orders:", error);
+      document.getElementById('orders-content').innerHTML = '<p class="text-red-500">Failed to load orders. Check permissions.</p>';
+    }
+  };
+
+  window.approveOrder=async(id)=>{ 
+    if(currentRole !== 'manager') return; 
+    try {
+      await db.collection('supplierOrders').doc(id).update({ status:'Approved', approvedAt: firebase.firestore.FieldValue.serverTimestamp() }); 
+      showNotification('Order approved!', 'success');
+      loadSupplierOrders(); 
+    } catch (error) {
+      console.error("Error approving order:", error);
+      showNotification('Failed to approve order. Check permissions.', 'error');
+    }
+  };
+  window.rejectOrder=async(id)=>{ 
+    if(currentRole !== 'manager') return; 
+    try {
+      await db.collection('supplierOrders').doc(id).update({ status:'Rejected', rejectedAt: firebase.firestore.FieldValue.serverTimestamp() }); 
+      showNotification('Order rejected.', 'success');
+      loadSupplierOrders(); 
+    } catch (error) {
+      console.error("Error rejecting order:", error);
+      showNotification('Failed to reject order. Check permissions.', 'error');
+    }
+  };
+
+  // Attach event listeners for filtering and sorting
+    if (document.getElementById('product-category-filter')) {
+      document.getElementById('product-category-filter').addEventListener('change', applyFiltersAndSort);
+    }
+    if (document.getElementById('product-sort')) {
+      document.getElementById('product-sort').addEventListener('change', applyFiltersAndSort);
+    }
+
+  lucide.createIcons();
 });
 </script>
 </body>
