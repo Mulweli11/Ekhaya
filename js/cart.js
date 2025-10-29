@@ -29,7 +29,7 @@ function updateCart() {
                     <small class="text-body-secondary">Qty: ${item.quantity}</small>
                 </div>
             </div>
-            <span class="text-body-secondary me-3">$${(item.price * item.quantity).toFixed(2)}</span>
+            <span class="text-body-secondary me-3">R${(item.price * item.quantity).toFixed(2)}</span>
             <button class="btn btn-sm btn-danger remove-item" data-product-name="${item.name}">
                 &times;
             </button>
@@ -38,9 +38,9 @@ function updateCart() {
     });
 
     // Update totals
-    offcanvasCartTotal.textContent = `$${total.toFixed(2)}`;
+    offcanvasCartTotal.textContent = `R${total.toFixed(2)}`;
     if (mainCartTotal) {
-        mainCartTotal.textContent = `$${total.toFixed(2)}`;
+        mainCartTotal.textContent = `R${total.toFixed(2)}`;
     }
 
     // Update item counts
@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const productName = productItem.querySelector("h3").textContent;
-            const productPrice = parseFloat(productItem.querySelector(".price").textContent.replace("$", ""));
+            const productPrice = parseFloat(productItem.querySelector(".price").textContent.replace("R", ""));
             const quantityInput = productItem.querySelector(".input-number");
             const productQty = parseInt(quantityInput.value);
             const productImageSrc = productItem.querySelector(".tab-image").getAttribute("src");
