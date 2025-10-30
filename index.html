@@ -305,74 +305,76 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
 
      <!-- account -->
      <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasLoginRegister" aria-labelledby="offcanvasLoginRegisterLabel">
-        <div class="offcanvas-header justify-content-center">
-            <h5 class="offcanvas-title" id="offcanvasLoginRegisterLabel">Account</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  <div class="offcanvas-header justify-content-center">
+    <h5 class="offcanvas-title" id="offcanvasLoginRegisterLabel">Account</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <!-- Login Form -->
+    <div id="login-form-wrapper" class="p-3">
+      <h2 class="text-center mb-4">Log In</h2>
+      <form id="login-form">
+        <div class="mb-3">
+          <label for="login-email" class="form-label">Email address</label>
+          <input type="email" class="form-control" id="login-email" required>
         </div>
-        <div class="offcanvas-body">
-            <!-- Login Form -->
-            <div id="login-form-wrapper" class="p-3">
-                <h2 class="text-center mb-4">Log In</h2>
-                <form id="login-form">
-                    <div class="mb-3">
-                        <label for="login-email" class="form-label">Email address</label>
-                        <input type="email" class="form-control" id="login-email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="login-password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="login-password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Log In</button>
-                </form>
-                <div class="text-center mt-3">
-                    <p class="mb-1">Don't have an account?</p>
-                    <button class="btn btn-link toggle-btn" data-target="register-form-wrapper">Register here</button>
-                </div>
-            </div>
-
-            <!-- Registration Form -->
-            <div id="register-form-wrapper" class="p-3 d-none">
-                <h2 class="text-center mb-4">Register</h2>
-                <form id="register-form">
-                    <div class="mb-3">
-                        <label for="register-name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="register-name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="register-email" class="form-label">Email address</label>
-                        <input type="email" class="form-control" id="register-email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="register-password" class="form-label">Password</label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="register-password" required>
-                            <button class="btn btn-outline-secondary" type="button" id="generate-password-btn">
-                                Generate Password ✨
-                            </button>
-                        </div>
-                        <div id="password-feedback" class="form-text"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="register-password-confirm" class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" id="register-password-confirm" required>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Register</button>
-                </form>
-                <div class="text-center mt-3">
-                    <p class="mb-1">Already have an account?</p>
-                    <button class="btn btn-link toggle-btn" data-target="login-form-wrapper">Log in here</button>
-                </div>
-            </div>
-
-            <!-- Logged In Page -->
-            <div id="logged-in-wrapper" class="p-3 d-none text-center">
-                <h2 class="mb-4">Welcome, <span id="user-name-display"></span>!</h2>
-                <p>You have successfully logged in.</p>
-                <button id="logout-btn" class="btn btn-danger w-100 mt-4">Log Out</button>
-            </div>
+        <div class="mb-3">
+          <label for="login-password" class="form-label">Password</label>
+          <input type="password" class="form-control" id="login-password" required>
         </div>
+        <button type="submit" class="btn btn-primary w-100">Log In</button>
+      </form>
+      <div class="text-center mt-3">
+        <p class="mb-1">Forgot your password?</p>
+        <button id="forgot-password-btn" class="btn btn-link">Reset Password</button>
+      </div>
+      <div class="text-center mt-3">
+        <p class="mb-1">Don't have an account?</p>
+        <button class="btn btn-link toggle-btn" data-target="register-form-wrapper">Register here</button>
+      </div>
     </div>
-  
+
+    <!-- Registration Form -->
+    <div id="register-form-wrapper" class="p-3 d-none">
+      <h2 class="text-center mb-4">Register</h2>
+      <form id="register-form">
+        <div class="mb-3">
+          <label for="register-name" class="form-label">Name</label>
+          <input type="text" class="form-control" id="register-name" required>
+        </div>
+        <div class="mb-3">
+          <label for="register-email" class="form-label">Email address</label>
+          <input type="email" class="form-control" id="register-email" required>
+        </div>
+        <div class="mb-3">
+          <label for="register-password" class="form-label">Password</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="register-password" required>
+            <button class="btn btn-outline-secondary" type="button" id="generate-password-btn">Generate Password ✨</button>
+          </div>
+          <div id="password-feedback" class="form-text"></div>
+        </div>
+        <div class="mb-3">
+          <label for="register-password-confirm" class="form-label">Confirm Password</label>
+          <input type="password" class="form-control" id="register-password-confirm" required>
+        </div>
+        <button type="submit" class="btn btn-success w-100">Register</button>
+      </form>
+      <div class="text-center mt-3">
+        <p class="mb-1">Already have an account?</p>
+        <button class="btn btn-link toggle-btn" data-target="login-form-wrapper">Log in here</button>
+      </div>
+    </div>
+
+    <!-- Logged In Page -->
+    <div id="logged-in-wrapper" class="p-3 d-none text-center">
+      <h2 class="mb-4">Welcome, <span id="user-name-display"></span>!</h2>
+      <p>You have successfully logged in.</p>
+      <button id="logout-btn" class="btn btn-danger w-100 mt-4">Log Out</button>
+    </div>
+  </div>
+</div>
+
     
     <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasSearch" aria-labelledby="Search">
     <div class="offcanvas-header justify-content-center">
