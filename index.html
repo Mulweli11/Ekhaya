@@ -476,15 +476,14 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
         <h4 class="d-flex justify-content-between align-items-center mb-3">
             <span class="text-primary">Search</span>
         </h4>
-        <form id="offcanvas-search-form" role="search" class="d-flex mt-3 gap-0">
-            <input id="offcanvas-search-input" 
-                   class="form-control rounded-start rounded-0 bg-light" 
-                   type="text" 
-                   placeholder="Search category or product..." 
-                   aria-label="Search" 
-                   list="categoryOptions">
-            <button class="btn btn-dark rounded-end rounded-0" type="submit">Search</button>
-        </form>
+        <form id="offcanvas-search-form" class="d-flex mt-3 gap-0">
+    <input id="offcanvas-search-input" 
+           class="form-control rounded-start rounded-0 bg-light" 
+           type="text" 
+           placeholder="Search category or product..." 
+           aria-label="Search">
+    <button class="btn btn-dark rounded-end rounded-0" type="submit">Search</button>
+</form>
     </div>
 </div>
 </div>
@@ -582,10 +581,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         </select>
                     </div>
                     <div class="col-11 col-md-7">
-                        <form id="search-form" class="text-center" action="index.html" method="post">
-                            <input type="text" class="form-control border-0 bg-transparent" placeholder="Search for more than 250 products" />
-                        </form>
-                    </div>
+    <form id="desktop-search-form" class="text-center">
+        <input type="text" class="form-control border-0 bg-transparent" placeholder="Search for more than 250 products" />
+    </form>
+</div>
+
                     <div class="col-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M21.71 20.29L18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 7-7a7 7 0 0 1-7 7Z"/></svg>
                     </div>
@@ -1270,10 +1270,399 @@ document.addEventListener('DOMContentLoaded', () => {
       updateCart();
     });
 </script>
+    updateCart();
+  });
+</script>
+
+<!-- ADD THE SEARCH JAVASCRIPT CODE RIGHT HERE -->
+<script>
+// Enhanced search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Search data storage
+    let searchData = {
+        categories: [],
+        products: []
+    };
+    
+    // Initialize search functionality
+    function initSearch() {
+        // Get search elements
+        const desktopSearchForm = document.getElementById('desktop-search-form');
+        const desktopSearchInput = document.querySelector('#desktop-search-form input');
+        const offcanvasSearchForm = document.getElementById('offcanvas-search-form');
+        const offcanvasSearchInput = document.getElementById('offcanvas-search-input');
+        
+        // Create search suggestion containers
+        createSuggestionContainers();
+        
+        // Load search data from Firebase
+        loadSearchData();
+        
+        // Add event listeners for search forms
+        if (desktopSearchForm) {
+            desktopSearchForm.addEventListener('submit', handleSearchSubmit);
+            if (desktopSearchInput) {
+                desktopSearchInput.addEventListener('input', handleSearchInput);
+                desktopSearchInput.addEventListener('focus', showSuggestions);
+            }
+        }
+        
+        if (offcanvasSearchForm) {
+            offcanvasSearchForm.addEventListener('submit', handleSearchSubmit);
+            if (offcanvasSearchInput) {
+                offcanvasSearchInput.addEventListener('input', handleSearchInput);
+                offcanvasSearchInput.addEventListener('focus', showSuggestions);
+            }
+        }
+        
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container')) {
+                hideSuggestions();
+            }
+        });
+    }
+    
+    // Create suggestion dropdown containers
+    function createSuggestionContainers() {
+        // Desktop search container
+        const desktopSearchBar = document.querySelector('.search-bar');
+        if (desktopSearchBar && !document.getElementById('desktop-search-suggestions')) {
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.id = 'desktop-search-suggestions';
+            suggestionsDiv.className = 'search-suggestions position-absolute bg-white shadow rounded mt-1';
+            suggestionsDiv.style.display = 'none';
+            suggestionsDiv.style.zIndex = '1000';
+            suggestionsDiv.style.width = 'calc(100% - 2rem)';
+            suggestionsDiv.style.left = '1rem';
+            desktopSearchBar.style.position = 'relative';
+            desktopSearchBar.appendChild(suggestionsDiv);
+        }
+        
+        // Offcanvas search container
+        const offcanvasSearch = document.querySelector('#offcanvasSearch .order-md-last');
+        if (offcanvasSearch && !document.getElementById('offcanvas-search-suggestions')) {
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.id = 'offcanvas-search-suggestions';
+            suggestionsDiv.className = 'search-suggestions position-absolute bg-white shadow rounded mt-1 w-100';
+            suggestionsDiv.style.display = 'none';
+            suggestionsDiv.style.zIndex = '1000';
+            offcanvasSearch.style.position = 'relative';
+            offcanvasSearch.appendChild(suggestionsDiv);
+        }
+    }
+    
+    // Load search data from Firebase
+    function loadSearchData() {
+        // Load categories
+        searchData.categories = [
+            "Fruits", "Vegetables", "Beverages", "Snacks", 
+            "Dairy", "Meat", "Breads & Sweets", "Breakfast", "Household"
+        ];
+        
+        // Load products from Firebase if available
+        if (typeof db !== 'undefined') {
+            db.collection("products").get().then((querySnapshot) => {
+                searchData.products = [];
+                querySnapshot.forEach((doc) => {
+                    const product = doc.data();
+                    searchData.products.push({
+                        name: product.name,
+                        category: product.category,
+                        id: doc.id
+                    });
+                });
+            }).catch((error) => {
+                console.log("Error loading products for search:", error);
+            });
+        }
+    }
+    
+    // Handle search form submission
+    function handleSearchSubmit(e) {
+        e.preventDefault();
+        
+        const searchInput = e.target.querySelector('input[type="text"]');
+        const searchTerm = searchInput.value.trim();
+        
+        if (searchTerm) {
+            performSearch(searchTerm);
+            hideSuggestions();
+        }
+    }
+    
+    // Handle search input (for suggestions)
+    function handleSearchInput(e) {
+        const searchTerm = e.target.value.trim();
+        
+        if (searchTerm.length > 0) {
+            showSuggestions(e.target, searchTerm);
+        } else {
+            hideSuggestions();
+        }
+    }
+    
+    // Show search suggestions
+    function showSuggestions(inputElement, searchTerm = '') {
+        if (!searchTerm && inputElement) {
+            searchTerm = inputElement.value.trim();
+        }
+        
+        if (!searchTerm) {
+            // Show popular searches if no input
+            showPopularSearches(inputElement);
+            return;
+        }
+        
+        const suggestions = getSearchSuggestions(searchTerm);
+        const suggestionsContainer = getSuggestionsContainer(inputElement);
+        
+        if (suggestionsContainer) {
+            suggestionsContainer.innerHTML = '';
+            
+            if (suggestions.categories.length === 0 && suggestions.products.length === 0) {
+                suggestionsContainer.innerHTML = '<div class="p-2 text-muted">No results found</div>';
+            } else {
+                // Add category suggestions
+                if (suggestions.categories.length > 0) {
+                    const categoryHeader = document.createElement('div');
+                    categoryHeader.className = 'suggestion-header p-2 border-bottom small text-muted fw-bold';
+                    categoryHeader.textContent = 'Categories';
+                    suggestionsContainer.appendChild(categoryHeader);
+                    
+                    suggestions.categories.forEach(category => {
+                        const categoryItem = document.createElement('div');
+                        categoryItem.className = 'suggestion-item p-2 border-bottom';
+                        categoryItem.innerHTML = `
+                            <div class="d-flex align-items-center">
+                                <svg width="16" height="16" class="me-2 text-primary"><use xlink:href="#category"></use></svg>
+                                <span>${category}</span>
+                            </div>
+                        `;
+                        categoryItem.addEventListener('click', () => {
+                            inputElement.value = category;
+                            performSearch(category);
+                            hideSuggestions();
+                        });
+                        suggestionsContainer.appendChild(categoryItem);
+                    });
+                }
+                
+                // Add product suggestions
+                if (suggestions.products.length > 0) {
+                    const productHeader = document.createElement('div');
+                    productHeader.className = 'suggestion-header p-2 border-bottom small text-muted fw-bold';
+                    productHeader.textContent = 'Products';
+                    suggestionsContainer.appendChild(productHeader);
+                    
+                    suggestions.products.forEach(product => {
+                        const productItem = document.createElement('div');
+                        productItem.className = 'suggestion-item p-2 border-bottom';
+                        productItem.innerHTML = `
+                            <div class="d-flex align-items-center">
+                                <svg width="16" height="16" class="me-2 text-success"><use xlink:href="#search"></use></svg>
+                                <div>
+                                    <div class="fw-medium">${product.name}</div>
+                                    <small class="text-muted">${product.category}</small>
+                                </div>
+                            </div>
+                        `;
+                        productItem.addEventListener('click', () => {
+                            inputElement.value = product.name;
+                            performSearch(product.name);
+                            hideSuggestions();
+                        });
+                        suggestionsContainer.appendChild(productItem);
+                    });
+                }
+            }
+            
+            suggestionsContainer.style.display = 'block';
+        }
+    }
+    
+    // Show popular searches
+    function showPopularSearches(inputElement) {
+        const popularSearches = [
+            "Apples", "Milk", "Bread", "Tomatoes", "Orange Juice",
+            "Potatoes", "Chicken", "Yogurt", "Chips", "Water"
+        ];
+        
+        const suggestionsContainer = getSuggestionsContainer(inputElement);
+        
+        if (suggestionsContainer) {
+            suggestionsContainer.innerHTML = '';
+            
+            const popularHeader = document.createElement('div');
+            popularHeader.className = 'suggestion-header p-2 border-bottom small text-muted fw-bold';
+            popularHeader.textContent = 'Popular Searches';
+            suggestionsContainer.appendChild(popularHeader);
+            
+            popularSearches.forEach(item => {
+                const popularItem = document.createElement('div');
+                popularItem.className = 'suggestion-item p-2 border-bottom';
+                popularItem.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <svg width="16" height="16" class="me-2 text-warning"><use xlink:href="#star-outline"></use></svg>
+                        <span>${item}</span>
+                    </div>
+                `;
+                popularItem.addEventListener('click', () => {
+                    inputElement.value = item;
+                    performSearch(item);
+                    hideSuggestions();
+                });
+                suggestionsContainer.appendChild(popularItem);
+            });
+            
+            suggestionsContainer.style.display = 'block';
+        }
+    }
+    
+    // Get search suggestions based on input
+    function getSearchSuggestions(searchTerm) {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        const suggestions = {
+            categories: [],
+            products: []
+        };
+        
+        // Find matching categories
+        suggestions.categories = searchData.categories.filter(category => 
+            category.toLowerCase().includes(lowerSearchTerm)
+        );
+        
+        // Find matching products
+        if (searchData.products) {
+            suggestions.products = searchData.products.filter(product => 
+                product.name.toLowerCase().includes(lowerSearchTerm) || 
+                product.category.toLowerCase().includes(lowerSearchTerm)
+            ).slice(0, 5); // Limit to 5 products
+        }
+        
+        return suggestions;
+    }
+    
+    // Get the appropriate suggestions container based on input element
+    function getSuggestionsContainer(inputElement) {
+        if (inputElement.closest('#offcanvasSearch')) {
+            return document.getElementById('offcanvas-search-suggestions');
+        } else {
+            return document.getElementById('desktop-search-suggestions');
+        }
+    }
+    
+    // Hide all suggestion containers
+    function hideSuggestions() {
+        const suggestionContainers = document.querySelectorAll('.search-suggestions');
+        suggestionContainers.forEach(container => {
+            container.style.display = 'none';
+        });
+    }
+    
+    // Perform the actual search
+    function performSearch(searchTerm) {
+        // Normalize the term
+        const normalizedTerm = searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1).toLowerCase();
+        
+        // Check if it's a category
+        const categoryIdMap = {
+            "Fruits": "standaloneFruits",
+            "Vegetables": "standaloneVegetables",
+            "Beverages": "standaloneBeverages",
+            "Snacks": "standaloneSnacks",
+            "Dairy": "standaloneDairy",
+            "Meat": "standaloneMeat",
+            "Breads & Sweets": "standaloneBreadsSweets",
+            "Breakfast": "standaloneBreakfast",
+            "Household": "standaloneHousehold"
+        };
+        
+        const targetId = categoryIdMap[normalizedTerm];
+        
+        if (targetId) {
+            // Redirect to the category section
+            const targetElement = document.getElementById(targetId.replace('#', ''));
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth' });
+                
+                // If in offcanvas, close it
+                const offcanvasEl = document.getElementById('offcanvasSearch');
+                if (offcanvasEl && typeof bootstrap !== 'undefined' && bootstrap.Offcanvas) {
+                    const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+                    if (offcanvas) offcanvas.hide();
+                }
+            }
+        } else {
+            // Search for products across all categories
+            highlightAndScrollToProducts(searchTerm);
+        }
+    }
+    
+    // Highlight and scroll to matching products
+    function highlightAndScrollToProducts(searchTerm) {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        let foundProduct = false;
+        
+        // Remove previous highlights
+        document.querySelectorAll('.product-highlight').forEach(el => {
+            el.classList.remove('product-highlight');
+            el.style.border = '';
+            el.style.boxShadow = '';
+        });
+        
+        // Search through all product sections
+        const productSections = [
+            'allProductsGrid',
+            'standaloneFruits', 'standaloneVegetables', 'standaloneBeverages',
+            'standaloneSnacks', 'standaloneDairy', 'standaloneMeat',
+            'standaloneBreadsSweets', 'standaloneBreakfast', 'standaloneHousehold'
+        ];
+        
+        productSections.forEach(sectionId => {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                const products = section.querySelectorAll('.product-item');
+                products.forEach(product => {
+                    const productName = product.querySelector('h3').textContent.toLowerCase();
+                    if (productName.includes(lowerSearchTerm)) {
+                        // Highlight the product
+                        product.classList.add('product-highlight');
+                        product.style.border = '2px solid #0d6efd';
+                        product.style.boxShadow = '0 0 10px rgba(13, 110, 253, 0.5)';
+                        
+                        // Scroll to the first found product
+                        if (!foundProduct) {
+                            product.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            foundProduct = true;
+                        }
+                    }
+                });
+            }
+        });
+        
+        // If no products found, show message
+        if (!foundProduct) {
+            alert(`No products found for "${searchTerm}". Try a different search term.`);
+        }
+        
+        // If in offcanvas, close it
+        const offcanvasEl = document.getElementById('offcanvasSearch');
+        if (offcanvasEl && typeof bootstrap !== 'undefined' && bootstrap.Offcanvas) {
+            const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (offcanvas) offcanvas.hide();
+        }
+    }
+    
+    // Initialize search when DOM is ready
+    initSearch();
+});
+</script>
 
 <script>
     // --- Firebase & Swiper/Product Rendering Logic (Modified) ---
     const firebaseConfig = {
+      // Your existing Firebase config continues here...
       apiKey: "AIzaSyDWH3LoCvRmTUMthsUsIA0MBiqZ4NmFyco",
       authDomain: "ecome-72c36.firebaseapp.com",
       projectId: "ecome-72c36",
@@ -2245,5 +2634,38 @@ document.addEventListener('DOMContentLoaded', () => {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
     <script src="js/plugins.js"></script>
     <script src="js/script.js"></script>
+    <script>
+// Simple search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForms = [
+        document.getElementById('desktop-search-form'),
+        document.getElementById('offcanvas-search-form')
+    ];
+    
+    searchForms.forEach(form => {
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const input = form.querySelector('input[type="text"]');
+                const searchTerm = input.value.trim();
+                
+                if (searchTerm) {
+                    // Simple search - scroll to products section
+                    const productsSection = document.getElementById('allProductsGrid');
+                    if (productsSection) {
+                        productsSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    
+                    // Close offcanvas if open
+                    const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasSearch'));
+                    if (offcanvas) offcanvas.hide();
+                    
+                    input.value = ''; // Clear input
+                }
+            });
+        }
+    });
+});
+</script>
   </body>
 </html>
