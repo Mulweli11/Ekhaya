@@ -160,60 +160,133 @@
     <h5 class="offcanvas-title">Checkout Details</h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
- <div class="offcanvas-body">
-  <form id="checkoutForm">
-    <!-- Greeting -->
-    <div class="mb-4 text-center">
-      <h2>Almost there, <span id="user-name-display"></span>!</h2>
-      <p class="text-muted">Please provide the details below to complete your order.</p>
-    </div>
+  <div class="offcanvas-body">
+    <form id="checkoutForm">
+      <!-- Personal Information -->
+      <div class="mb-4">
+        <h6 class="mb-3">Personal Information</h6>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="firstName" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="lastName" required>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+          <input type="email" class="form-control" id="email" required>
+        </div>
+        <div class="mb-3">
+          <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+          <input type="tel" class="form-control" id="phone" required>
+        </div>
+      </div>
 
-    <!-- Delivery Address -->
-    <div class="mb-3">
-      <label for="address" class="form-label">Delivery Address <span class="text-danger">*</span></label>
-      <textarea
-        id="address"
-        class="form-control"
-        rows="2"
-        placeholder="Enter your delivery address"
-        required
-      ></textarea>
-      <small class="text-muted">Include street, building, or apartment info if needed.</small>
-    </div>
+      <!-- Delivery Address -->
+      <div class="mb-4">
+        <h6 class="mb-3">Delivery Address</h6>
+        <div class="mb-3">
+          <label for="address" class="form-label">Street Address <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="address" required>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="city" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="postalCode" class="form-label">Postal Code <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="postalCode" required>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="deliveryInstructions" class="form-label">Delivery Instructions (Optional)</label>
+          <textarea class="form-control" id="deliveryInstructions" rows="2" placeholder="E.g., Leave at front door, call on arrival, etc."></textarea>
+        </div>
+      </div>
 
-    <!-- Delivery Message (Optional) -->
-    <div class="mb-3">
-      <label for="deliveryMessage" class="form-label">Delivery Message (Optional)</label>
-      <textarea
-        id="deliveryMessage"
-        class="form-control"
-        rows="2"
-        placeholder="Add special instructions or a message for the delivery person"
-      ></textarea>
-      <small class="text-muted">Example: “Please call me on arrival” or “Leave at the reception.”</small>
-    </div>
+      <!-- Payment Method -->
+      <div class="mb-4">
+        <h6 class="mb-3">Payment Method</h6>
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="paymentMethod" id="cashOnDelivery" value="cash" checked>
+            <label class="form-check-label" for="cashOnDelivery">
+              Cash on Delivery
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" value="card">
+            <label class="form-check-label" for="creditCard">
+              Credit/Debit Card
+            </label>
+          </div>
+        </div>
+        
+        <!-- Card Details (hidden by default) -->
+        <div id="cardDetails" class="d-none">
+          <div class="mb-3">
+            <label for="cardNumber" class="form-label">Card Number</label>
+            <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456">
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="expiryDate" class="form-label">Expiry Date</label>
+              <input type="text" class="form-control" id="expiryDate" placeholder="MM/YY">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="cvv" class="form-label">CVV</label>
+              <input type="text" class="form-control" id="cvv" placeholder="123">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="cardholderName" class="form-label">Cardholder Name</label>
+            <input type="text" class="form-control" id="cardholderName">
+          </div>
+        </div>
+      </div>
 
-    <!-- Payment Method -->
-    <div class="mb-3">
-      <label for="payment" class="form-label">Payment Method <span class="text-danger">*</span></label>
-      <select id="payment" class="form-select" required>
-        <option value="">Select a payment method</option>
-        <option value="card">Credit / Debit Card</option>
-        <option value="cash">Cash on Delivery</option>
-      </select>
-    </div>
+      <!-- Order Summary -->
+      <div class="mb-4">
+        <h6 class="mb-3">Order Summary</h6>
+        <div class="border rounded p-3 bg-light">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Subtotal:</span>
+            <span id="checkoutSubtotal">R0</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Delivery Fee:</span>
+            <span id="deliveryFee">R50</span>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between fw-bold">
+            <span>Total:</span>
+            <span id="checkoutTotal">R0</span>
+          </div>
+        </div>
+      </div>
 
-    <!-- Total & Submit -->
-    <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-4">
-      <strong>Total: <span id="checkoutTotal">R0</span></strong>
-      <button type="submit" class="btn btn-success">Confirm Order</button>
-    </div>
-  </form>
+      <!-- Terms and Conditions -->
+      <div class="mb-4">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="termsAgreement" required>
+          <label class="form-check-label small" for="termsAgreement">
+            I agree to the <a href="#" class="text-primary">Terms and Conditions</a> and <a href="#" class="text-primary">Privacy Policy</a>
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="d-grid">
+        <button type="submit" class="btn btn-success btn-lg">Place Order</button>
+      </div>
+    </form>
+  </div>
 </div>
 
-
-
-</div>
 <!-- Toast Notification -->
 <div class="position-fixed top-0 end-0 p-3" style="z-index: 2000;">
   <div id="checkoutToast" class="toast align-items-center text-bg-success border-0 fade" role="alert" aria-live="assertive" aria-atomic="true">
@@ -267,10 +340,28 @@
 </style>
 
 <script>
+// Show/hide card details based on payment method
+document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const cardDetails = document.getElementById('cardDetails');
+    if (this.value === 'card') {
+      cardDetails.classList.remove('d-none');
+    } else {
+      cardDetails.classList.add('d-none');
+    }
+  });
+});
+
 // Open Checkout Offcanvas when clicking the button
 document.getElementById("checkout-btn")?.addEventListener("click", () => {
   const cartTotal = document.getElementById("offcanvas-cart-total").textContent;
-  document.getElementById("checkoutTotal").textContent = cartTotal;
+  const subtotal = parseFloat(cartTotal.replace('R', ''));
+  const deliveryFee = 50;
+  const total = subtotal + deliveryFee;
+  
+  document.getElementById("checkoutSubtotal").textContent = cartTotal;
+  document.getElementById("deliveryFee").textContent = `R${deliveryFee}`;
+  document.getElementById("checkoutTotal").textContent = `R${total.toFixed(2)}`;
 
   const checkoutPanel = new bootstrap.Offcanvas("#offcanvasCheckout");
   checkoutPanel.show();
@@ -902,6 +993,20 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </section>
 
+<!-- All Products Section -->
+<section class="py-5">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <h3 class="mb-4">All Products</h3>
+                <div id="allProductsGrid" class="product-grid">
+                    <!-- All products will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Trending Products -->
 <section class="py-5">
     <div class="container-fluid">
@@ -1304,7 +1409,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // The master rendering function
     function renderAllCategories(allProducts) {
-        // 1. RENDER TABBED SECTIONS
+        // 1. RENDER ALL PRODUCTS SECTION
+        const allProductsGrid = document.getElementById("allProductsGrid");
+        if (allProductsGrid) {
+            allProductsGrid.innerHTML = "";
+            
+            if (allProducts.length === 0) {
+                allProductsGrid.innerHTML = `<p class="text-center w-100">No products found.</p>`;
+            } else {
+                allProducts.forEach(p => allProductsGrid.insertAdjacentHTML("beforeend", createProductHTML(p)));
+                attachEventListeners(allProductsGrid, allProducts);
+            }
+        }
+        
+        // 2. RENDER TABBED SECTIONS
         categories.forEach(category => {
             const wrapper = document.querySelector(`${category.id} .swiper-wrapper`);
             if (!wrapper) return;
@@ -1321,7 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
             attachEventListeners(wrapper, categoryProducts);
         });
         
-        // 2. RENDER STANDALONE SECTIONS
+        // 3. RENDER STANDALONE SECTIONS
         standaloneCategories.forEach(category => {
             const wrapper = document.querySelector(`${category.id} .swiper-wrapper`);
             if (!wrapper) return;
@@ -1340,7 +1458,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initSwiper(category.id);
         });
 
-        // 3. TAB-SWITCHING SWIPER INITIALIZATION
+        // 4. TAB-SWITCHING SWIPER INITIALIZATION
         // Initialize the Swiper for the *active* tab (Fruits) on initial load
         initSwiper("#productsGridFruits");
         
@@ -1810,7 +1928,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <a href="#" class="text-decoration-none text-dark">Top Streetwear Trends That Are Taking Over 2025</a>
               </h3>
               <p class="text-muted mt-2">
-                From oversized hoodies to bold sneakers — here’s how you can elevate your street style game with the latest trends everyone’s loving.
+                From oversized hoodies to bold sneakers — here's how you can elevate your street style game with the latest trends everyone's loving.
               </p>
             </div>
           </div>
@@ -1873,7 +1991,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="container-fluid">
         <h2 class="my-5">People are also looking for</h2>
         <a href="#" class="btn btn-warning me-2 mb-2">Blue diamon almonds</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Angie’s Boomchickapop Corn</a>
+        <a href="#" class="btn btn-warning me-2 mb-2">Angie's Boomchickapop Corn</a>
         <a href="#" class="btn btn-warning me-2 mb-2">Salty kettle Corn</a>
         <a href="#" class="btn btn-warning me-2 mb-2">Chobani Greek Yogurt</a>
         <a href="#" class="btn btn-warning me-2 mb-2">Sweet Vanilla Yogurt</a>
@@ -1882,7 +2000,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="#" class="btn btn-warning me-2 mb-2">Chao Cheese Creamy</a>
         <a href="#" class="btn btn-warning me-2 mb-2">Chicken meatballs</a>
         <a href="#" class="btn btn-warning me-2 mb-2">Blue diamon almonds</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Angie’s Boomchickapop Corn</a>
+        <a href="#" class="btn btn-warning me-2 mb-2">Angie's Boomchickapop Corn</a>
         <a href="#" class="btn btn-warning me-2 mb-2">Salty kettle Corn</a>
         <a href="#" class="btn btn-warning me-2 mb-2">Chobani Greek Yogurt</a>
         <a href="#" class="btn btn-warning me-2 mb-2">Sweet Vanilla Yogurt</a>
@@ -1975,7 +2093,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="col-md-10">
               <div class="card-body p-0">
                 <h5>Daily Offers</h5>
-                <p class="card-text">Don’t miss out! New discounts and limited-time deals are added every single day.</p>
+                <p class="card-text">Don't miss out! New discounts and limited-time deals are added every single day.</p>
               </div>
             </div>
           </div>
@@ -2112,7 +2230,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
          
           </div>
-        </div>
+        </div> 
       </div>
     </div>
     <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js"></script>
