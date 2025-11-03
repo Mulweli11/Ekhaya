@@ -154,7 +154,7 @@
 
     </div>
 
-    <!-- Checkout Offcanvas -->
+  <!-- Checkout Offcanvas -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCheckout">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title">Checkout Details</h5>
@@ -426,42 +426,104 @@ document.getElementById("checkoutForm")?.addEventListener("submit", (e) => {
     </div>
 
     <!-- Registration Form -->
-    <div id="register-form-wrapper" class="p-3 d-none">
-      <h2 class="text-center mb-4">Register</h2>
-      <form id="register-form">
-        <div class="mb-3">
-          <label for="register-name" class="form-label">Name</label>
-          <input type="text" class="form-control" id="register-name" required>
-        </div>
-        <div class="mb-3">
-          <label for="register-email" class="form-label">Email address</label>
-          <input type="email" class="form-control" id="register-email" required>
-        </div>
-        <div class="mb-3">
-          <label for="register-password" class="form-label">Password</label>
-          <div class="input-group">
-            <input type="password" class="form-control" id="register-password" required>
-            <button class="btn btn-outline-secondary" type="button" id="generate-password-btn">Generate Password ✨</button>
-          </div>
-          <div id="password-feedback" class="form-text"></div>
-        </div>
-        <div class="mb-3">
-          <label for="register-password-confirm" class="form-label">Confirm Password</label>
-          <input type="password" class="form-control" id="register-password-confirm" required>
-        </div>
-        <button type="submit" class="btn btn-success w-100">Register</button>
-      </form>
-      <div class="text-center mt-3">
-        <p class="mb-1">Already have an account?</p>
-        <button class="btn btn-link toggle-btn" data-target="login-form-wrapper">Log in here</button>
-      </div>
+    <!-- Registration Form -->
+<div id="register-form-wrapper" class="p-3 d-none">
+  <h2 class="text-center mb-4">Register</h2>
+  <form id="register-form">
+    <div class="mb-3">
+      <label for="register-name" class="form-label">Name</label>
+      <input type="text" class="form-control" id="register-name" required>
     </div>
+    <div class="mb-3">
+      <label for="register-email" class="form-label">Email address</label>
+      <input type="email" class="form-control" id="register-email" required>
+    </div>
+    <div class="mb-3">
+      <label for="register-role" class="form-label">Role</label>
+      <select id="register-role" class="form-control">
+        <option value="customer">Customer</option>
+       
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="register-password" class="form-label">Password</label>
+      <div class="input-group">
+        <input type="password" class="form-control" id="register-password" required>
+        <button class="btn btn-outline-secondary" type="button" id="generate-password-btn">Generate Password ✨</button>
+      </div>
+      <div id="password-feedback" class="form-text"></div>
+    </div>
+    <div class="mb-3">
+      <label for="register-password-confirm" class="form-label">Confirm Password</label>
+      <input type="password" class="form-control" id="register-password-confirm" required>
+    </div>
+    <button type="submit" class="btn btn-success w-100">Register</button>
+  </form>
+  <div class="text-center mt-3">
+    <p class="mb-1">Already have an account?</p>
+    <button class="btn btn-link toggle-btn" data-target="login-form-wrapper">Log in here</button>
+  </div>
+</div>
 
     <!-- Logged In Page -->
     <div id="logged-in-wrapper" class="p-3 d-none text-center">
       <h2 class="mb-4">Welcome, <span id="user-name-display"></span>!</h2>
       <p>You have successfully logged in.</p>
-      <button id="logout-btn" class="btn btn-danger w-100 mt-4">Log Out</button>
+      
+      <!-- Profile and Order Management Section -->
+      <div class="profile-section mt-4">
+        <div class="d-grid gap-2">
+          <button id="view-profile-btn" class="btn btn-info">View Profile</button>
+          <button id="view-orders-btn" class="btn btn-warning">Track Orders</button>
+          <button id="logout-btn" class="btn btn-danger">Log Out</button>
+        </div>
+        
+        <!-- Profile View Section -->
+        <div id="profile-view-section" class="mt-4 d-none">
+          <h4>Your Profile</h4>
+          <div class="card">
+            <div class="card-body">
+              <p><strong>Name:</strong> <span id="profile-name"></span></p>
+              <p><strong>Email:</strong> <span id="profile-email"></span></p>
+              <p><strong>Role:</strong> <span id="profile-role"></span></p>
+              <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
+              <p><strong>Address:</strong> <span id="profile-address"></span></p>
+              <button id="edit-profile-btn" class="btn btn-primary btn-sm">Edit Profile</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Profile Edit Section -->
+        <div id="profile-edit-section" class="mt-4 d-none">
+          <h4>Edit Profile</h4>
+          <form id="profile-edit-form">
+            <div class="mb-3">
+              <label for="edit-name" class="form-label">Name</label>
+              <input type="text" class="form-control" id="edit-name" required>
+            </div>
+            <div class="mb-3">
+              <label for="edit-phone" class="form-label">Phone</label>
+              <input type="tel" class="form-control" id="edit-phone">
+            </div>
+            <div class="mb-3">
+              <label for="edit-address" class="form-label">Address</label>
+              <textarea class="form-control" id="edit-address" rows="3"></textarea>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-success">Save Changes</button>
+              <button type="button" id="cancel-edit-btn" class="btn btn-secondary">Cancel</button>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Orders Section -->
+        <div id="orders-section" class="mt-4 d-none">
+          <h4>Your Orders</h4>
+          <div id="orders-list">
+            <!-- Orders will be populated here -->
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -661,41 +723,45 @@ document.addEventListener('DOMContentLoaded', () => {
               
                   <select class="filter-categories border-0 mb-0 me-5">
     <option value="" selected>Shop by Departments</option>
-    <option value="Fruits">Fruits 🍎</option>
-    <option value="Vegetables">Vegetables 🥦</option>
-    <option value="Beverages">Beverages 🍹</option>
-    <option value="Snacks">Snacks 🥨</option>
-    <option value="Dairy">Dairy 🧀</option>
-    <option value="Meat">Meat 🥩</option>
-    <option value="Other">Other Groceries</option>
+    <option value="#standaloneFruits">Fruits 🍎</option>
+    <option value="#standaloneVegetables">Vegetables 🥦</option>
+    <option value="#standaloneBeverages">Beverages 🍹</option>
+    <option value="#standaloneSnacks">Snacks 🥨</option>
+    <option value="#standaloneDairy">Dairy 🧀</option>
+    <option value="#standaloneMeat">Meat 🥩</option>
+    <option value="#allProductsGrid">Other Groceries</option>
 </select>
+
+<!-- Add this JavaScript to handle the dropdown navigation -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const departmentDropdown = document.querySelector('.filter-categories');
+    
+    if (departmentDropdown) {
+        departmentDropdown.addEventListener('change', function() {
+            const selectedValue = this.value;
+            
+            if (selectedValue) {
+                // Scroll to the selected section
+                const targetElement = document.querySelector(selectedValue);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+                
+                // Reset dropdown to default option
+                this.selectedIndex = 0;
+            }
+        });
+    }
+});
+</script>
               
-                  <ul class="navbar-nav justify-content-end menu-list list-unstyled d-flex gap-md-3 mb-0">
+                  
                     
-                    </li>
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" role="button" id="pages" data-bs-toggle="dropdown" aria-expanded="false">Pages</a>
-                      <ul class="dropdown-menu" aria-labelledby="pages">
-                        <li><a href="index.html" class="dropdown-item">About Us </a></li>
-                        <li><a href="index.html" class="dropdown-item">Shop </a></li>
-                        <li><a href="index.html" class="dropdown-item">Single Product </a></li>
-                        <li><a href="index.html" class="dropdown-item">Cart </a></li>                     
-                        <li><a href="index.html" class="dropdown-item">Blog </a></li>                                       
-                        <li><a href="index.html" class="dropdown-item">Contact </a></li>                      
-                        <li><a href="index.html" class="dropdown-item">My Account </a></li>
-                        <li><a href="index.html" class="dropdown-item">404 Error </a></li>
-                      </ul>
-                    </li>
-                    <li class="nav-item">
-                      <a href="#brand" class="nav-link">Brand</a>
-                    </li>
-                    <li class="nav-item">
-                      <a href="#sale" class="nav-link">Sale</a>
-                    </li>
-                    <li class="nav-item">
-                      <a href="#blog" class="nav-link">Blog</a>
-                    </li>
-                  </ul>
+                    
                 
                 </div>
 
@@ -718,32 +784,31 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="swiper-wrapper">
                     
                     <div class="swiper-slide">
-                      <div class="row banner-content p-5">
-                        <div class="content-wrapper col-md-7">
-                          <div class="categories my-3">Rise with Freshness Every Morning</div>
-                          <h3 class="display-4">Fresh Bread, Every Day.</h3>
+    <div class="row banner-content p-5">
+        <div class="content-wrapper col-md-7">
+            <div class="categories my-3">Rise with Freshness Every Morning</div>
+            <h3 class="display-4">Fresh Bread, Every Day.</h3>
                           
-                          <a href="#" class="btn btn-outline-dark btn-lg text-uppercase fs-6 rounded-1 px-4 py-3 mt-3">Shop Now</a>
-                        </div>
-                        <div class="img-wrapper col-md-5">
-                          <img src="images/Albany-Superior_700g-White-Bread.png" class="img-fluid">
-                        </div>
-                      </div>
-                    </div>
+                         <a href="#allProductsGrid" class="btn btn-outline-dark btn-lg text-uppercase fs-6 rounded-1 px-4 py-3 mt-3">Shop Now</a>
+        </div>
+        <div class="img-wrapper col-md-5">
+            <img src="images/Albany-Superior_700g-White-Bread.png" class="img-fluid">
+        </div>
+    </div>
+</div>
                     
                     <div class="swiper-slide">
-                      <div class="row banner-content p-5">
-                        <div class="content-wrapper col-md-7">
-                          <div class="categories mb-3 pb-3">100% natural</div>
-                          <h3 class="banner-title">Fresh Smoothie & Summer Juice</h3>
-                         
-                          <a href="#" class="btn btn-outline-dark btn-lg text-uppercase fs-6 rounded-1">Shop Collection</a>
-                        </div>
-                        <div class="img-wrapper col-md-5">
-                          <img src="images/product-thumb-1.png" class="img-fluid">
-                        </div>
-                      </div>
-                    </div>
+    <div class="row banner-content p-5">
+        <div class="content-wrapper col-md-7">
+            <div class="categories mb-3 pb-3">100% natural</div>
+            <h3 class="banner-title">Fresh Smoothie & Summer Juice</h3>
+                          <a href="#allProductsGrid" class="btn btn-outline-dark btn-lg text-uppercase fs-6 rounded-1">Shop Collection</a>
+        </div>
+        <div class="img-wrapper col-md-5">
+            <img src="images/product-thumb-1.png" class="img-fluid">
+        </div>
+    </div>
+</div>
                     
                     <div class="swiper-slide">
                       <div class="row banner-content p-5">
@@ -826,7 +891,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <h3 class="category-title">Fruits</h3>
     </a>
     <a href="#standaloneVegetables" class="nav-link category-item swiper-slide">
-        <img src="images/icon-vegetables-carrot.png" alt="Category Thumbnail">
+        <img src="images/icon-vegetables-broccoli.png" alt="Category Thumbnail">
         <h3 class="category-title">Vegetables</h3>
     </a>
     
@@ -2288,11 +2353,10 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="post-header">
               <h3 class="post-title h5">
-                <a href="#" class="text-decoration-none text-dark">10 Casual Outfit Ideas for Kids That Look Effortlessly Cool</a>
+                <a href="#" class="text-decoration-none text-dark"></a>
               </h3>
               <p class="text-muted mt-2">
-                Discover creative and comfy outfit ideas that let your kids play freely while still looking stylish — perfect for everyday adventures.
-              </p>
+                
             </div>
           </div>
         </article>
@@ -2377,25 +2441,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <section class="py-5">
       <div class="container-fluid">
-        <h2 class="my-5">People are also looking for</h2>
-        <a href="#" class="btn btn-warning me-2 mb-2">Blue diamon almonds</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Angie's Boomchickapop Corn</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Salty kettle Corn</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chobani Greek Yogurt</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Sweet Vanilla Yogurt</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Foster Farms Takeout Crispy wings</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Warrior Blend Organic</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chao Cheese Creamy</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chicken meatballs</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Blue diamon almonds</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Angie's Boomchickapop Corn</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Salty kettle Corn</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chobani Greek Yogurt</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Sweet Vanilla Yogurt</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Foster Farms Takeout Crispy wings</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Warrior Blend Organic</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chao Cheese Creamy</a>
-        <a href="#" class="btn btn-warning me-2 mb-2">Chicken meatballs</a>
+       
       </div>
     </section>
 
@@ -2536,23 +2582,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="footer-menu">
               <h5 class="widget-title">Ultras</h5>
               <ul class="menu-list list-unstyled">
-                <li class="menu-item">
-                  <a href="#" class="nav-link">About us</a>
-                </li>
-                <li class="menu-item">
-                  <a href="#" class="nav-link">Conditions </a>
-                </li>
-                <li class="menu-item">
-                  <a href="#" class="nav-link">Our Journals</a>
-                </li>
-                <li class="menu-item">
-                  <a href="#" class="nav-link">Careers</a>
-                </li>
-                <li class="menu-item">
-                  <a href="#" class="nav-link">Affiliate Programme</a>
-                </li>
-                <li class="menu-item">
-                  <a href="#" class="nav-link">Ultras Press</a>
+                
                 </li>
               </ul>
             </div>
@@ -2666,5 +2696,234 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<!-- Customer Profile and Order Tracking Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile and Order Management
+    const viewProfileBtn = document.getElementById('view-profile-btn');
+    const viewOrdersBtn = document.getElementById('view-orders-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const profileViewSection = document.getElementById('profile-view-section');
+    const profileEditSection = document.getElementById('profile-edit-section');
+    const ordersSection = document.getElementById('orders-section');
+    const editProfileBtn = document.getElementById('edit-profile-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const profileEditForm = document.getElementById('profile-edit-form');
+
+    // Show profile section
+    viewProfileBtn?.addEventListener('click', function() {
+        profileViewSection.classList.remove('d-none');
+        profileEditSection.classList.add('d-none');
+        ordersSection.classList.add('d-none');
+        loadUserProfile();
+    });
+
+    // Show orders section
+    viewOrdersBtn?.addEventListener('click', function() {
+        profileViewSection.classList.add('d-none');
+        profileEditSection.classList.add('d-none');
+        ordersSection.classList.remove('d-none');
+        loadUserOrders();
+    });
+
+    // Edit profile
+    editProfileBtn?.addEventListener('click', function() {
+        profileViewSection.classList.add('d-none');
+        profileEditSection.classList.remove('d-none');
+        populateEditForm();
+    });
+
+    // Cancel edit
+    cancelEditBtn?.addEventListener('click', function() {
+        profileEditSection.classList.add('d-none');
+        profileViewSection.classList.remove('d-none');
+    });
+
+    // Load user profile from Firebase
+    function loadUserProfile() {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        
+        if (user) {
+            const db = getFirestore();
+            const userDocRef = doc(db, "users", user.uid);
+            
+            getDoc(userDocRef).then((docSnap) => {
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    
+                    // Update profile display
+                    document.getElementById('profile-name').textContent = userData.name || 'Not set';
+                    document.getElementById('profile-email').textContent = user.email;
+                    document.getElementById('profile-role').textContent = userData.role || 'Customer';
+                    document.getElementById('profile-phone').textContent = userData.phone || 'Not set';
+                    document.getElementById('profile-address').textContent = userData.address || 'Not set';
+                    
+                    // Update welcome message
+                    document.getElementById('user-name-display').textContent = userData.name || 'User';
+                } else {
+                    console.log("No user data found");
+                }
+            }).catch((error) => {
+                console.error("Error loading user profile:", error);
+            });
+        }
+    }
+
+    // Populate edit form with current data
+    function populateEditForm() {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        
+        if (user) {
+            const db = getFirestore();
+            const userDocRef = doc(db, "users", user.uid);
+            
+            getDoc(userDocRef).then((docSnap) => {
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    
+                    document.getElementById('edit-name').value = userData.name || '';
+                    document.getElementById('edit-phone').value = userData.phone || '';
+                    document.getElementById('edit-address').value = userData.address || '';
+                }
+            });
+        }
+    }
+
+    // Handle profile update
+    profileEditForm?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const auth = getAuth();
+        const user = auth.currentUser;
+        
+        if (user) {
+            const db = getFirestore();
+            const userDocRef = doc(db, "users", user.uid);
+            
+            const updatedData = {
+                name: document.getElementById('edit-name').value,
+                phone: document.getElementById('edit-phone').value,
+                address: document.getElementById('edit-address').value,
+                updatedAt: new Date()
+            };
+            
+            setDoc(userDocRef, updatedData, { merge: true }).then(() => {
+                alert('Profile updated successfully!');
+                profileEditSection.classList.add('d-none');
+                profileViewSection.classList.remove('d-none');
+                loadUserProfile(); // Refresh profile data
+            }).catch((error) => {
+                console.error("Error updating profile:", error);
+                alert('Error updating profile. Please try again.');
+            });
+        }
+    });
+
+    // Load user orders
+    function loadUserOrders() {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        
+        if (user) {
+            const db = getFirestore();
+            const ordersList = document.getElementById('orders-list');
+            
+            // Clear existing orders
+            ordersList.innerHTML = '<p>Loading orders...</p>';
+            
+            // Query orders for this user
+            const ordersQuery = db.collection("orders")
+                .where("userId", "==", user.uid)
+                .orderBy("createdAt", "desc");
+            
+            ordersQuery.get().then((querySnapshot) => {
+                if (querySnapshot.empty) {
+                    ordersList.innerHTML = '<p>No orders found.</p>';
+                    return;
+                }
+                
+                ordersList.innerHTML = '';
+                
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    const orderDate = order.createdAt?.toDate() || new Date();
+                    const formattedDate = orderDate.toLocaleDateString();
+                    
+                    const orderStatus = getOrderStatus(order.status);
+                    
+                    const orderCard = document.createElement('div');
+                    orderCard.className = 'card mb-3';
+                    orderCard.innerHTML = `
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title">Order #${doc.id.substring(0, 8)}</h6>
+                                    <p class="card-text mb-1">
+                                        <small class="text-muted">Date: ${formattedDate}</small>
+                                    </p>
+                                    <p class="card-text mb-1">
+                                        <strong>Total: R${order.total?.toFixed(2) || '0.00'}</strong>
+                                    </p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge ${orderStatus.badgeClass}">${orderStatus.text}</span>
+                                    <br>
+                                    <small class="text-muted">${order.items?.length || 0} items</small>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small>Delivery to: ${order.deliveryAddress || 'Not specified'}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    ordersList.appendChild(orderCard);
+                });
+            }).catch((error) => {
+                console.error("Error loading orders:", error);
+                ordersList.innerHTML = '<p>Error loading orders. Please try again.</p>';
+            });
+        }
+    }
+
+    // Helper function to get order status display
+    function getOrderStatus(status) {
+        const statusMap = {
+            'pending': { text: 'Pending', badgeClass: 'bg-warning' },
+            'confirmed': { text: 'Confirmed', badgeClass: 'bg-info' },
+            'shipped': { text: 'Shipped', badgeClass: 'bg-primary' },
+            'delivered': { text: 'Delivered', badgeClass: 'bg-success' },
+            'cancelled': { text: 'Cancelled', badgeClass: 'bg-danger' }
+        };
+        
+        return statusMap[status] || { text: 'Unknown', badgeClass: 'bg-secondary' };
+    }
+
+    // Logout functionality
+    logoutBtn?.addEventListener('click', function() {
+        const auth = getAuth();
+        signOut(auth).then(() => {
+            // Hide logged in section and show login form
+            document.getElementById('logged-in-wrapper').classList.add('d-none');
+            document.getElementById('login-form-wrapper').classList.remove('d-none');
+            
+            // Clear any displayed sections
+            profileViewSection.classList.add('d-none');
+            profileEditSection.classList.add('d-none');
+            ordersSection.classList.add('d-none');
+            
+            // Close the offcanvas
+            const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasLoginRegister'));
+            offcanvas.hide();
+        }).catch((error) => {
+            console.error("Error signing out:", error);
+        });
+    });
+});
+</script>
+
   </body>
 </html>

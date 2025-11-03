@@ -18,6 +18,7 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
 .tab-image { width: 100%; height: 150px; object-fit: cover; border-radius: 0.5rem; }
 .product-item { transition: transform 0.2s; }
 .product-item:hover { transform: translateY(-2px); }
+.debug-info { background: #f3f4f6; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; font-size: 12px; }
 </style>
 </head>
 <body class="bg-gray-100 text-gray-900">
@@ -48,6 +49,7 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
           <select id="login-role" class="w-full px-3 py-2 border border-gray-300 rounded-md">
             <option value="manager">Manager</option>
             <option value="assistant">Shop Assistant</option>
+            <option value="customer">Customer</option>
           </select>
         </div>
         <button type="submit" class="btn btn-primary w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">Log In</button>
@@ -77,6 +79,7 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
         <div class="mb-3">
           <label for="register-role" class="form-label block text-sm font-medium text-gray-700 mb-1">Role</label>
           <select id="register-role" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+            <option value="customer">Customer</option>
             <option value="manager">Manager</option>
             <option value="assistant">Shop Assistant</option>
           </select>
@@ -223,9 +226,51 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
       <div id="reports-content" class="bg-white p-6 rounded-xl shadow-lg mt-6"></div>
     </div>
 
-    <div id="orders" class="page">
+        <div id="orders" class="page">
+      <h2 class="text-2xl font-bold mb-4">Customer Orders</h2>
+      
+      <!-- Debug Info -->
+      <div id="debug-info" class="debug-info">
+        <strong>Debug Information:</strong>
+        <button id="hide-debug" class="ml-2 text-sm bg-gray-300 px-2 py-1 rounded">Hide</button>
+        <div id="debug-content"></div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">All Customer Orders</h3>
+          <div class="flex gap-2">
+            <button id="refresh-orders" class="bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600">
+              Refresh Orders
+            </button>
+            <select id="order-status-filter" class="border px-3 py-2 rounded">
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="preparing">Preparing</option>
+              <option value="out-for-delivery">Out for Delivery</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Orders Counter -->
+        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+          <strong>Orders Found: <span id="orders-count">0</span></strong>
+        </div>
+        
+        <div id="customer-orders-content" class="space-y-4">
+          <!-- Customer orders will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <div id="supplier-orders" class="page">
       <h2 class="text-2xl font-bold mb-4">Supplier Orders</h2>
-      <div id="orders-content" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      <div id="supplier-orders-content" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Supplier orders will be loaded here -->
+      </div>
       <p class="text-sm text-gray-500 mt-4">Orders are created by the main user interface (not shown here) when stock is low.</p>
     </div>
 
@@ -235,6 +280,7 @@ body { -ms-overflow-style: none; scrollbar-width: none; }
         <h3 class="text-xl font-bold mb-3">Add New User Record (for Role Assignment)</h3>
         <input type="email" id="new-user-email" placeholder="New User Email" class="border px-3 py-2 rounded mb-2 w-full">
         <select id="new-user-role" class="border px-3 py-2 rounded mb-4 w-full">
+          <option value="customer">Customer</option>
           <option value="manager">Manager</option>
           <option value="assistant">Shop Assistant</option>
         </select>
@@ -307,9 +353,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const cloudName='dxvjpkrzf';
   const uploadPreset='grocery_products';
 
-  firebase.initializeApp(firebaseConfig);
+  // Initialize Firebase
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  } else {
+    firebase.app(); // if already initialized, use that one
+  }
+  
   const auth = firebase.auth();
   const db = firebase.firestore();
+
+  // Enable debug mode
+  const DEBUG_MODE = true;
 
   // UI Elements
   const offcanvas = document.getElementById('offcanvasLoginRegister');
@@ -334,6 +389,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeNavButton = null; 
   let dataLoaded = false; 
 
+  // Debug logging function
+  function debugLog(message, data = null) {
+    if (DEBUG_MODE) {
+      console.log(`[DEBUG] ${message}`, data || '');
+    }
+  }
+
   // --- Usability Fix: Notification System ---
   const showNotification = (message, type = 'success') => {
     let color = type === 'success' ? 'bg-green-500' : 'bg-red-500';
@@ -347,6 +409,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000); 
   };
 
+  // Debug toggle
+  document.getElementById('debug-toggle')?.addEventListener('click', () => {
+    const debugInfo = document.getElementById('debug-info');
+    debugInfo.classList.toggle('hidden');
+  });
+
   // --- Toggle between login/register ---
   document.querySelectorAll('.toggle-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -358,21 +426,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Auth State ---
   auth.onAuthStateChanged(async (user) => {
+    debugLog('Auth state changed:', user ? 'User logged in' : 'User logged out');
+    
     if (user) {
       // USER IS LOGGED IN
       try {
+        debugLog('Fetching user data for:', user.uid);
         const doc = await db.collection('users').doc(user.uid).get();
+        
         if (doc.exists) {
           const userData = doc.data();
           currentRole = userData.role;
           userNameDisplay.textContent = userData.name || user.email;
+          debugLog('User role found:', currentRole);
         } else {
-          currentRole = 'assistant';
+          currentRole = 'customer';
           userNameDisplay.textContent = user.email;
+          debugLog('No user document, defaulting to customer role');
         }
       } catch (error) {
         console.error("Error fetching user role:", error);
-        currentRole = 'assistant';
+        currentRole = 'customer';
         userNameDisplay.textContent = user.email;
       }
       
@@ -426,7 +500,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const userCred = await auth.createUserWithEmailAndPassword(email, password);
-      await db.collection('users').doc(userCred.user.uid).set({ name, email, role });
+      await db.collection('users').doc(userCred.user.uid).set({ 
+        name, 
+        email, 
+        role,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+      });
       feedback.textContent = 'Registration successful!';
       feedback.classList.add('text-green-500');
     } catch (err) {
@@ -505,28 +584,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // 🛡️ CRITICAL FIX: Proper data loading sequence
   const loadAllData = async () => {
     try {
-      console.log("Loading all data...");
+      debugLog("Starting to load all data...");
       
       // First load products - this is critical for dashboard metrics
       await loadProducts();
-      console.log("Products loaded:", allProducts.length);
+      debugLog("Products loaded:", allProducts.length);
       
       // Always populate sales menu
       populateSaleProducts(); 
 
       // Now load dashboard metrics with the products data
       if(currentRole === 'manager'){
-        console.log("Loading manager dashboard...");
+        debugLog("Loading manager dashboard...");
         await loadDashboardMetrics(); 
         await loadUsers(); 
         await loadSupplierOrders(); 
+        await loadCustomerOrders();
         populateReportProducts();
-      } else {
-        console.log("Loading assistant dashboard...");
+      } else if (currentRole === 'assistant') {
+        debugLog("Loading assistant dashboard...");
         await loadDashboardMetrics(false); 
+        await loadCustomerOrders();
+      } else {
+        debugLog("Loading customer dashboard...");
+        await loadDashboardMetrics(false);
+        await loadCustomerOrders();
       }
       
-      console.log("All data loaded successfully");
+      debugLog("All data loaded successfully");
     } catch (e) {
       console.error("Error in loadAllData:", e);
       showNotification("Failed to load dashboard data. Check console for details.", 'error');
@@ -558,8 +643,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const roles={
-    manager:['dashboard','products','reports','orders','users'],
-    assistant:['dashboard','sales']
+    manager:['dashboard','products','reports','orders','supplier-orders','users'],
+    assistant:['dashboard','sales','orders'],
+    customer:['dashboard','orders']
   };
   
   const setupNav=(role)=>{
@@ -569,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
     userPages.forEach(item=>{
       const icon = getNavIcon(item); 
       const btn=document.createElement('button');
-      btn.innerHTML=`<i data-lucide="${icon}" class="w-4 h-4 mr-2"></i> ${item.charAt(0).toUpperCase()+item.slice(1)}`;
+      btn.innerHTML=`<i data-lucide="${icon}" class="w-4 h-4 mr-2"></i> ${item.charAt(0).toUpperCase()+item.slice(1).replace('-', ' ')}`;
       btn.className='w-full text-left py-2 px-3 rounded flex items-center text-gray-700 hover:bg-gray-100 transition';
       
       btn.addEventListener('click',()=>{
@@ -589,9 +675,10 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'dashboard': return 'layout-dashboard';
       case 'products': return 'shopping-bag';
       case 'reports': return 'bar-chart';
-      case 'orders': return 'package';
+      case 'supplier-orders': return 'package';
       case 'users': return 'users';
       case 'sales': return 'receipt';
+      case 'orders': return 'shopping-cart';
       default: return 'circle';
     }
   }
@@ -599,18 +686,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Dashboard Enhancement: Metrics and Chart ---
   const loadDashboardMetrics = async (isManager = true) => {
     try {
-      console.log("Loading dashboard metrics...");
+      debugLog("Loading dashboard metrics...");
       
       // Load all necessary data in parallel for better performance
-      const [productsSnapshot, salesSnapshot, customersSnapshot] = await Promise.all([
+      const [productsSnapshot, salesSnapshot, customersSnapshot, ordersSnapshot] = await Promise.all([
         db.collection('products').get(),
         db.collection('sales').get(),
-        db.collection('customers').get()
+        db.collection('customers').get(),
+        db.collection('orders').get()
       ]);
 
       const totalProducts = productsSnapshot.size;
       const totalSales = salesSnapshot.size;
       const totalCustomers = customersSnapshot.size;
+      const totalOrders = ordersSnapshot.size;
       
       let totalRevenue = 0;
       const salesData = salesSnapshot.docs.map(doc => {
@@ -621,8 +710,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       });
 
-      console.log("Sales data:", salesData);
-      console.log("All products:", allProducts);
+      debugLog("Sales data:", salesData);
+      debugLog("All products:", allProducts);
 
       // Calculate revenue
       for (const sale of salesData) {
@@ -642,16 +731,17 @@ document.addEventListener('DOMContentLoaded', () => {
         ${createMetricCard('Sales', totalSales, 'trending-up', 'text-green-500', 'bg-green-100')}
         ${createMetricCard('Revenue', `R ${totalRevenue.toFixed(2)}`, 'dollar-sign', 'text-purple-500', 'bg-purple-100')}
         ${createMetricCard('Customers', totalCustomers, 'users', 'text-orange-500', 'bg-orange-100')}
+        ${createMetricCard('Orders', totalOrders, 'shopping-cart', 'text-indigo-500', 'bg-indigo-100')}
       `;
 
       // Add manager-specific metrics
       if (isManager) {
-        const ordersSnapshot = await db.collection('supplierOrders').get();
-        const pendingOrders = ordersSnapshot.docs.filter(doc => {
+        const supplierOrdersSnapshot = await db.collection('supplierOrders').get();
+        const pendingOrders = supplierOrdersSnapshot.docs.filter(doc => {
           const status = doc.data().status;
           return status !== 'Approved' && status !== 'Rejected';
         }).length;
-        metricsHtml += createMetricCard('Pending Orders', pendingOrders, 'package', 'text-red-500', 'bg-red-100');
+        metricsHtml += createMetricCard('Pending Supplier Orders', pendingOrders, 'package', 'text-red-500', 'bg-red-100');
       }
 
       metricsContainer.innerHTML = metricsHtml;
@@ -667,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chartArea.innerHTML = '<p class="text-gray-500">Sales chart available for Managers only.</p>';
       }
       
-      console.log("Dashboard metrics loaded successfully");
+      debugLog("Dashboard metrics loaded successfully");
     } catch (error) {
       console.error("Error loading dashboard metrics:", error);
       showNotification("Failed to load dashboard metrics", 'error');
@@ -760,7 +850,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const snapshot=await db.collection('products').get();
       allProducts=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
-      console.log("Loaded products:", allProducts.length);
+      debugLog("Loaded products:", allProducts.length);
       applyFiltersAndSort(); 
     } catch (error) {
       console.error("Error loading products:", error);
@@ -1058,6 +1148,445 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // --- Customer Orders Management ---
+  const loadCustomerOrders = async () => {
+    try {
+      debugLog("Loading customer orders...");
+      
+      // Update debug info
+      const debugContent = document.getElementById('debug-content');
+      if (debugContent) {
+        debugContent.innerHTML = `
+          <div>Current Role: ${currentRole}</div>
+          <div>User ID: ${auth.currentUser?.uid || 'Not logged in'}</div>
+          <div>Loading orders...</div>
+        `;
+      }
+
+      let query = db.collection('orders').orderBy('createdAt', 'desc');
+      
+      // If user is customer, only show their orders
+      if (currentRole === 'customer') {
+        if (!auth.currentUser) {
+          debugLog("No authenticated user for customer orders");
+          if (debugContent) {
+            debugContent.innerHTML += '<div style="color: red;">No authenticated user</div>';
+          }
+          return;
+        }
+        query = query.where('userId', '==', auth.currentUser.uid);
+        debugLog("Loading customer-specific orders for user:", auth.currentUser.uid);
+      } else {
+        debugLog("Loading all orders (manager/assistant view)");
+      }
+      
+      const snapshot = await query.get();
+      const ordersContainer = document.getElementById('customer-orders-content');
+      if (!ordersContainer) {
+        debugLog("Orders container not found");
+        return;
+      }
+
+      ordersContainer.innerHTML = '';
+
+      if (snapshot.empty) {
+        ordersContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No orders found.</p>';
+        debugLog("No orders found in database");
+        if (debugContent) {
+          debugContent.innerHTML += `<div>No orders found (searched ${snapshot.size} documents)</div>`;
+        }
+        return;
+      }
+
+      debugLog(`Found ${snapshot.size} orders`);
+      if (debugContent) {
+        debugContent.innerHTML += `<div>Found ${snapshot.size} orders</div>`;
+      }
+
+      snapshot.docs.forEach(doc => {
+        const order = doc.data();
+        const orderId = doc.id;
+        
+        const statusColors = {
+          'pending': 'bg-yellow-100 text-yellow-800',
+          'confirmed': 'bg-blue-100 text-blue-800',
+          'preparing': 'bg-orange-100 text-orange-800',
+          'out-for-delivery': 'bg-purple-100 text-purple-800',
+          'delivered': 'bg-green-100 text-green-800',
+          'cancelled': 'bg-red-100 text-red-800'
+        };
+
+        // Format date safely
+        let orderDate = 'N/A';
+        try {
+          if (order.createdAt && order.createdAt.toDate) {
+            orderDate = order.createdAt.toDate().toLocaleDateString();
+          }
+        } catch (e) {
+          debugLog("Error formatting date:", e);
+        }
+
+        const orderHtml = `
+          <div class="border rounded-lg p-4 bg-white shadow-sm">
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <h4 class="font-bold text-lg">Order #${orderId.substring(0, 8)}</h4>
+                <p class="text-sm text-gray-600">Customer: ${order.customerInfo?.name || 'N/A'}</p>
+                <p class="text-sm text-gray-600">Email: ${order.customerInfo?.email || 'N/A'}</p>
+                <p class="text-sm text-gray-600">Phone: ${order.customerInfo?.phone || 'N/A'}</p>
+              </div>
+              <div class="text-right">
+                <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}">
+                  ${order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || 'Pending'}
+                </span>
+                <p class="text-sm text-gray-600 mt-1">${orderDate}</p>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <h5 class="font-semibold mb-2">Items:</h5>
+              ${order.items?.map(item => `
+                <div class="flex justify-between text-sm py-1 border-b">
+                  <span>${item.name} x ${item.quantity}</span>
+                  <span>R ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
+                </div>
+              `).join('') || '<p class="text-sm text-gray-500">No items</p>'}
+            </div>
+            
+            <div class="flex justify-between items-center border-t pt-3">
+              <div>
+                <strong class="text-lg">Total: R ${(order.totalAmount || 0).toFixed(2)}</strong>
+              </div>
+              ${currentRole !== 'customer' ? `
+                <div class="flex gap-2">
+                  <select class="border rounded px-2 py-1 text-sm order-status-select" data-order-id="${orderId}">
+                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                    <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                    <option value="out-for-delivery" ${order.status === 'out-for-delivery' ? 'selected' : ''}>Out for Delivery</option>
+                    <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                    <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                  </select>
+                </div>
+              ` : ''}
+            </div>
+            
+            ${order.deliveryAddress ? `
+              <div class="mt-3 text-sm text-gray-600">
+                <strong>Delivery Address:</strong> ${order.deliveryAddress.address}, ${order.deliveryAddress.city}, ${order.deliveryAddress.postalCode}
+              </div>
+            ` : ''}
+          </div>
+        `;
+
+        ordersContainer.innerHTML += orderHtml;
+      });
+
+      // Add event listeners for status updates
+      document.querySelectorAll('.order-status-select').forEach(select => {
+        select.addEventListener('change', async (e) => {
+          const orderId = e.target.getAttribute('data-order-id');
+          const newStatus = e.target.value;
+          
+          try {
+            await db.collection('orders').doc(orderId).update({
+              status: newStatus,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showNotification(`Order status updated to ${newStatus}`, 'success');
+             // --- Customer Orders Management ---
+  const loadCustomerOrders = async () => {
+    try {
+      debugLog("🚀 Starting to load customer orders...");
+      
+      const debugContent = document.getElementById('debug-content');
+      const statusFilter = document.getElementById('order-status-filter').value;
+      
+      if (debugContent) {
+        debugContent.innerHTML = `
+          <div><strong>Loading Orders...</strong></div>
+          <div>Current Role: ${currentRole}</div>
+          <div>User ID: ${auth.currentUser?.uid || 'Not logged in'}</div>
+          <div>Status Filter: ${statusFilter}</div>
+          <div>Timestamp: ${new Date().toLocaleTimeString()}</div>
+        `;
+      }
+
+      // Build the query
+      let query = db.collection('orders').orderBy('createdAt', 'desc');
+      
+      debugLog("Building query for role:", currentRole);
+      
+      // If user is customer, only show their orders
+      if (currentRole === 'customer') {
+        if (!auth.currentUser) {
+          const errorMsg = "No authenticated user for customer orders";
+          debugLog(errorMsg);
+          if (debugContent) {
+            debugContent.innerHTML += `<div style="color: red;">${errorMsg}</div>`;
+          }
+          showNotification("Please log in to view your orders", 'error');
+          return;
+        }
+        query = query.where('userId', '==', auth.currentUser.uid);
+        debugLog("Loading customer-specific orders for user:", auth.currentUser.uid);
+      } else {
+        debugLog("Loading ALL orders (manager/assistant view)");
+      }
+      
+      // Apply status filter if not "all"
+      if (statusFilter !== 'all') {
+        query = query.where('status', '==', statusFilter);
+        debugLog("Applied status filter:", statusFilter);
+      }
+      
+      debugLog("Executing Firestore query...");
+      const snapshot = await query.get();
+      const ordersContainer = document.getElementById('customer-orders-content');
+      const ordersCount = document.getElementById('orders-count');
+      
+      if (!ordersContainer) {
+        debugLog("❌ Orders container not found in DOM");
+        return;
+      }
+
+      ordersContainer.innerHTML = '';
+      ordersCount.textContent = '0';
+
+      if (snapshot.empty) {
+        const noOrdersMsg = '<p class="text-gray-500 text-center py-8">No orders found matching your criteria.</p>';
+        ordersContainer.innerHTML = noOrdersMsg;
+        debugLog("📭 No orders found in database");
+        if (debugContent) {
+          debugContent.innerHTML += `<div>📭 No orders found (searched ${snapshot.size} documents)</div>`;
+        }
+        showNotification("No orders found", 'info');
+        return;
+      }
+
+      debugLog(`✅ Found ${snapshot.size} orders`);
+      ordersCount.textContent = snapshot.size;
+      
+      if (debugContent) {
+        debugContent.innerHTML += `<div style="color: green;">✅ Found ${snapshot.size} orders</div>`;
+      }
+
+      // Process each order
+      snapshot.docs.forEach((doc, index) => {
+        const order = doc.data();
+        const orderId = doc.id;
+        
+        debugLog(`Processing order ${index + 1}:`, { id: orderId, status: order.status });
+
+        const statusColors = {
+          'pending': 'bg-yellow-100 text-yellow-800',
+          'confirmed': 'bg-blue-100 text-blue-800',
+          'preparing': 'bg-orange-100 text-orange-800',
+          'out-for-delivery': 'bg-purple-100 text-purple-800',
+          'delivered': 'bg-green-100 text-green-800',
+          'cancelled': 'bg-red-100 text-red-800'
+        };
+
+        // Format date safely
+        let orderDate = 'Date not available';
+        let orderTime = '';
+        try {
+          if (order.createdAt && order.createdAt.toDate) {
+            const dateObj = order.createdAt.toDate();
+            orderDate = dateObj.toLocaleDateString();
+            orderTime = dateObj.toLocaleTimeString();
+          } else if (order.createdAt && order.createdAt._seconds) {
+            const dateObj = new Date(order.createdAt._seconds * 1000);
+            orderDate = dateObj.toLocaleDateString();
+            orderTime = dateObj.toLocaleTimeString();
+          }
+        } catch (e) {
+          debugLog("Error formatting date:", e);
+        }
+
+        // Calculate item total safely
+        const itemsTotal = order.items?.reduce((sum, item) => {
+          return sum + ((item.price || 0) * (item.quantity || 1));
+        }, 0) || 0;
+
+        const orderHtml = `
+          <div class="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex-1">
+                <h4 class="font-bold text-lg text-gray-800">Order #${orderId.substring(0, 8).toUpperCase()}</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                  <div>
+                    <p class="text-sm text-gray-600">
+                      <span class="font-medium">Customer:</span> ${order.customerInfo?.firstName || 'N/A'} ${order.customerInfo?.lastName || ''}
+                    </p>
+                    <p class="text-sm text-gray-600">
+                      <span class="font-medium">Email:</span> ${order.customerInfo?.email || 'N/A'}
+                    </p>
+                    <p class="text-sm text-gray-600">
+                      <span class="font-medium">Phone:</span> ${order.customerInfo?.phone || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">
+                      <span class="font-medium">Order Date:</span> ${orderDate}
+                    </p>
+                    <p class="text-sm text-gray-600">
+                      <span class="font-medium">Time:</span> ${orderTime}
+                    </p>
+                    <p class="text-sm text-gray-600">
+                      <span class="font-medium">Payment:</span> ${order.paymentMethod || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="text-right ml-4">
+                <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}">
+                  ${order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || 'Pending'}
+                </span>
+                <p class="text-xs text-gray-500 mt-1">ID: ${orderId.substring(0, 8)}</p>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <h5 class="font-semibold mb-2 text-gray-700">Order Items:</h5>
+              <div class="space-y-2">
+                ${order.items?.map(item => `
+                  <div class="flex justify-between items-center text-sm py-2 px-3 bg-gray-50 rounded">
+                    <div class="flex items-center">
+                      <span class="font-medium">${item.name}</span>
+                      <span class="text-gray-500 ml-2">x${item.quantity}</span>
+                    </div>
+                    <span class="font-semibold">R ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
+                  </div>
+                `).join('') || '<p class="text-sm text-gray-500 text-center py-2">No items in this order</p>'}
+              </div>
+            </div>
+            
+            <div class="flex justify-between items-center border-t pt-3">
+              <div>
+                <strong class="text-lg text-gray-800">Total: R ${(order.totalAmount || itemsTotal + (order.deliveryFee || 50)).toFixed(2)}</strong>
+                <p class="text-sm text-gray-600">Items: R ${itemsTotal.toFixed(2)} + Delivery: R ${(order.deliveryFee || 50).toFixed(2)}</p>
+              </div>
+              ${currentRole !== 'customer' ? `
+                <div class="flex gap-2">
+                  <select class="border rounded px-3 py-2 text-sm order-status-select" data-order-id="${orderId}">
+                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                    <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                    <option value="out-for-delivery" ${order.status === 'out-for-delivery' ? 'selected' : ''}>Out for Delivery</option>
+                    <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                    <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                  </select>
+                </div>
+              ` : ''}
+            </div>
+            
+            ${order.deliveryAddress ? `
+              <div class="mt-3 pt-3 border-t">
+                <h6 class="font-semibold text-sm text-gray-700 mb-1">Delivery Address:</h6>
+                <p class="text-sm text-gray-600">
+                  ${order.deliveryAddress.address}, ${order.deliveryAddress.city}, ${order.deliveryAddress.postalCode}
+                  ${order.deliveryAddress.instructions ? `<br><span class="text-xs text-gray-500">Instructions: ${order.deliveryAddress.instructions}</span>` : ''}
+                </p>
+              </div>
+            ` : ''}
+          </div>
+        `;
+
+        ordersContainer.innerHTML += orderHtml;
+      });
+
+      // Add event listeners for status updates
+      document.querySelectorAll('.order-status-select').forEach(select => {
+        select.addEventListener('change', async (e) => {
+          const orderId = e.target.getAttribute('data-order-id');
+          const newStatus = e.target.value;
+          
+          try {
+            await db.collection('orders').doc(orderId).update({
+              status: newStatus,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showNotification(`✅ Order status updated to ${newStatus}`, 'success');
+            loadCustomerOrders(); // Reload to show changes
+          } catch (error) {
+            console.error("Error updating order status:", error);
+            showNotification('❌ Failed to update order status', 'error');
+          }
+        });
+      });
+
+      if (debugContent) {
+        debugContent.innerHTML += `<div style="color: green;">✅ Orders loaded successfully at ${new Date().toLocaleTimeString()}</div>`;
+      }
+
+      showNotification(`✅ Loaded ${snapshot.size} orders`, 'success');
+
+    } catch (error) {
+      console.error("❌ Error loading customer orders:", error);
+      const ordersContainer = document.getElementById('customer-orders-content');
+      if (ordersContainer) {
+        ordersContainer.innerHTML = `
+          <div class="text-red-500 text-center py-8">
+            <p class="text-lg font-semibold">Failed to load orders</p>
+            <p class="text-sm mt-2">Error: ${error.message}</p>
+            <p class="text-sm">Please check the console for details.</p>
+            <button onclick="loadCustomerOrders()" class="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+              Try Again
+            </button>
+          </div>
+        `;
+      }
+      
+      const debugContent = document.getElementById('debug-content');
+      if (debugContent) {
+        debugContent.innerHTML += `<div style="color: red;">❌ Error: ${error.message}</div>`;
+      }
+      
+      showNotification("❌ Failed to load orders", 'error');
+    }
+  };
+          } catch (error) {
+            console.error("Error updating order status:", error);
+            showNotification('Failed to update order status', 'error');
+          }
+        });
+      });
+
+      if (debugContent) {
+        debugContent.innerHTML += `<div style="color: green;">Orders loaded successfully</div>`;
+      }
+
+    } catch (error) {
+      console.error("Error loading customer orders:", error);
+      const ordersContainer = document.getElementById('customer-orders-content');
+      if (ordersContainer) {
+        ordersContainer.innerHTML = `
+          <div class="text-red-500 text-center py-4">
+            <p>Failed to load orders.</p>
+            <p class="text-sm">Error: ${error.message}</p>
+            <p class="text-sm">Please check the console for details.</p>
+          </div>
+        `;
+      }
+      
+      const debugContent = document.getElementById('debug-content');
+      if (debugContent) {
+        debugContent.innerHTML += `<div style="color: red;">Error: ${error.message}</div>`;
+      }
+      
+      showNotification("Failed to load orders", 'error');
+    }
+  };
+
+  // Add event listener for order status filter
+  document.addEventListener('DOMContentLoaded', () => {
+    const statusFilter = document.getElementById('order-status-filter');
+    if (statusFilter) {
+      statusFilter.addEventListener('change', loadCustomerOrders);
+    }
+  });
+
   const loadUsers=async()=>{
     if(currentRole !== 'manager') return; 
     try {
@@ -1076,6 +1605,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('users-list').innerHTML = '<p class="text-red-500">Failed to load users. Check permissions.</p>';
     }
   };
+  
   document.getElementById('add-user').addEventListener('click',async()=>{
     if(currentRole !== 'manager') { showNotification('Access Denied', 'error'); return; } 
     const email=document.getElementById('new-user-email').value.trim();
@@ -1091,6 +1621,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showNotification('Failed to add user record. Check permissions.', 'error');
     }
   });
+  
   window.deleteUser=async(id)=>{ 
     if(currentRole !== 'manager') return; 
     if(!confirm('Are you sure you want to delete this user record? This does NOT delete their Firebase Auth account.')) return;
@@ -1108,7 +1639,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(currentRole !== 'manager') return; 
     try {
       const snapshot=await db.collection('supplierOrders').orderBy('timestamp', 'desc').get();
-      const container=document.getElementById('orders-content');
+      const container=document.getElementById('supplier-orders-content');
       container.innerHTML='';
       
       if (snapshot.empty) {
@@ -1135,7 +1666,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (error) {
       console.error("Error loading orders:", error);
-      document.getElementById('orders-content').innerHTML = '<p class="text-red-500">Failed to load orders. Check permissions.</p>';
+      document.getElementById('supplier-orders-content').innerHTML = '<p class="text-red-500">Failed to load orders. Check permissions.</p>';
     }
   };
 
@@ -1150,6 +1681,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showNotification('Failed to approve order. Check permissions.', 'error');
     }
   };
+  
   window.rejectOrder=async(id)=>{ 
     if(currentRole !== 'manager') return; 
     try {
@@ -1163,13 +1695,22 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Attach event listeners for filtering and sorting
-    if (document.getElementById('product-category-filter')) {
-      document.getElementById('product-category-filter').addEventListener('change', applyFiltersAndSort);
-    }
-    if (document.getElementById('product-sort')) {
-      document.getElementById('product-sort').addEventListener('change', applyFiltersAndSort);
-    }
-
+  if (document.getElementById('product-category-filter')) {
+    document.getElementById('product-category-filter').addEventListener('change', applyFiltersAndSort);
+  }
+  if (document.getElementById('product-sort')) {
+    document.getElementById('product-sort').addEventListener('change', applyFiltersAndSort);
+  }
+  // Refresh orders button
+  document.getElementById('refresh-orders')?.addEventListener('click', loadCustomerOrders);
+  
+  // Hide debug info
+  document.getElementById('hide-debug')?.addEventListener('click', () => {
+    document.getElementById('debug-info').classList.add('hidden');
+  });
+  
+  // Order status filter
+  document.getElementById('order-status-filter')?.addEventListener('change', loadCustomerOrders);
   lucide.createIcons();
 });
 </script>
